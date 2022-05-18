@@ -7,7 +7,6 @@ import numpy as np
 import numdifftools as nd
 import geometric.internal
 from utils import g2_molecules
-from xtb.ase.calculator import XTB
 from pesexp.calculators import (_openbabel_methods,
                                 get_calculator)
 from pesexp.hessians.hessian_guesses import (filter_hessian,
@@ -65,6 +64,7 @@ def test_xtb_hessian(system):
     H = compute_hessian_guess(atoms, 'xtb')
     np.testing.assert_allclose(atoms.get_positions(), x0)
     np.testing.assert_allclose(H, H.T, atol=1e-8)
+    XTB = pytest.importorskip('xtb.ase.calculator.XTB')
     atoms.calc = XTB(method='GFN2-xTB', accuracy=0.3)
     H_ref = numerical_hessian(atoms, step=0.005 * ase.units.Bohr)
     eig, _ = np.linalg.eigh(H)
