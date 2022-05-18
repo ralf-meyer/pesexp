@@ -3,7 +3,7 @@ name = 'pesexp'
 version = '0.0.1'
 description = 'A package to explore potential energy surfaces'
 authors = [{name = 'Ralf Meyer', email = 'meyer.ralf@yahoo.com'}]
-dependencies = ['numpy', 'ase']
+dependencies = ['numpy', 'ase', 'openbabel']
 
 
 [project.optional-dependencies]
