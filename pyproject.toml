@@ -7,7 +7,7 @@ dependencies = ['numpy', 'ase']
 
 
 [project.optional-dependencies]
-tests = ['pytest', 'pytest-cov', 'rmsd', 'numdifftools', 'geometric', 'openbabel']
+tests = ['pytest', 'pytest-cov', 'rmsd', 'numdifftools', 'geometric']
 
 [build-system]
 requires = ['setuptools>=42']

@@ -16,7 +16,7 @@ jobs:
     - name: Conda info
       shell: bash -l {0}
       run: |
-        conda install -c conda-forge xtb-python
+        conda install -c conda-forge xtb-python openbabel
         conda info
     - name: Install package
       run: |
