@@ -1,0 +1,26 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  CI:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: test
+        python-version: 3.7
+    - name: Conda info
+      shell: bash -l {0}
+      run: |
+        conda install -c conda-forge xtb-python
+        conda info
+    - name: Install package
+      run: |
+        pip install ".[tests]"
+    - name: Run tests
+      run: |
+        pytest -v --cov=pesexp
