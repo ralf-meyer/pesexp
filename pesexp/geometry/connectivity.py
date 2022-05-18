@@ -1,8 +1,8 @@
 import numpy as np
 import ase.data
 import itertools
-from molSimplify.optimize.primitives import (Distance, Angle, LinearAngle,
-                                             Dihedral, Improper)
+from pesexp.geometry.primitives import (Distance, Angle, LinearAngle,
+                                        Dihedral, Improper)
 
 
 def find_connectivity(atoms, threshold=1.25, connect_fragments=True):
