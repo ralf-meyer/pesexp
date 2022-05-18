@@ -3,11 +3,11 @@ name = 'pesexp'
 version = '0.0.1'
 description = 'A package to explore potential energy surfaces'
 authors = [{name = 'Ralf Meyer', email = 'meyer.ralf@yahoo.com'}]
-dependencies = ['numpy', 'ase', 'openbabel']
+dependencies = ['numpy', 'ase']
 
 
 [project.optional-dependencies]
-tests = ['pytest', 'pytest-cov', 'rmsd', 'numdifftools', 'geometric']
+tests = ['pytest', 'pytest-cov', 'rmsd', 'numdifftools', 'geometric', 'openbabel']
 
 [build-system]
 requires = ['setuptools>=42']
