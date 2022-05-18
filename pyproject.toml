@@ -1,3 +1,14 @@
+[project]
+name = 'pesexp'
+version = '0.0.1'
+description = 'A package to explore potential energy surfaces'
+authors = [{name = 'Ralf Meyer', email = 'meyer.ralf@yahoo.com'}]
+dependencies = ['numpy', 'ase']
+
+
+[project.optional-dependencies]
+tests = ['pytest', 'pytest-cov', 'rmsd', 'numdifftools', 'geometric']
+
 [build-system]
-requires = ['setuptools>=42', 'numpy', 'ase', 'openbabel']
+requires = ['setuptools>=42']
 build-backend = 'setuptools.build_meta'
