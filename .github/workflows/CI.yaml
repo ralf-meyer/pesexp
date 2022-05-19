@@ -26,4 +26,4 @@ jobs:
         pip install ".[tests]"
     - name: Run tests
       run: |
-        pytest -v --cov=pesexp
+        pytest --cov=pesexp
