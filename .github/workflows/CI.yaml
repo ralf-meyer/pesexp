@@ -23,7 +23,7 @@ jobs:
         conda info
     - name: Install package
       run: |
-        pip install ".[tests]"
+        pip install -e ".[tests]"
     - name: Run tests
       run: |
         pytest --cov=pesexp --cov-report=xml
