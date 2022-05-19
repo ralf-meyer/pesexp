@@ -2,24 +2,17 @@ import numpy as np
 from pesexp.utils.io import (read_molecule, read_terachem_frequencies,
                              read_terachem_input)
 from pesexp.calculators import TeraChem
-from pkg_resources import resource_filename, Requirement
 
 
-def test_read_molecule():
-    in_file = resource_filename(
-        Requirement.parse('molSimplify'),
-        'tests/optimize/inputs/acac/acac.inp')
-    atoms, xyz_file = read_molecule(in_file)
+def test_read_molecule(resource_path_root):
+    atoms, xyz_file = read_molecule(resource_path_root / 'acac/acac.inp')
     assert xyz_file.name == 'fe_oct_2_acac_3_s_5_conf_1.xyz'
     assert atoms.get_initial_magnetic_moments().sum() == 4.
     assert atoms.get_initial_charges().sum() == -1.
 
 
-def test_read_terachem_input():
-    in_file = resource_filename(
-        Requirement.parse('molSimplify'),
-        'tests/optimize/inputs/acac/acac.inp')
-    atoms = read_terachem_input(in_file)
+def test_read_terachem_input(resource_path_root):
+    atoms = read_terachem_input(resource_path_root / 'acac/acac.inp')
     assert atoms.get_initial_magnetic_moments().sum() == 4.
     assert atoms.get_initial_charges().sum() == -1.
     calc = atoms.calc
@@ -41,11 +34,9 @@ def test_read_terachem_input():
         assert calc.parameters[key] == val
 
 
-def test_read_terachem_frequencies():
-    in_file = resource_filename(
-        Requirement.parse('molSimplify'),
-        'tests/optimize/inputs/Frequencies.dat')
-    freq, modes = read_terachem_frequencies(in_file)
+def test_read_terachem_frequencies(resource_path_root):
+    freq, modes = read_terachem_frequencies(
+        resource_path_root / 'io/Frequencies.dat')
 
     assert len(freq) == 66
     # Test is sorted

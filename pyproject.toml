@@ -7,7 +7,8 @@ dependencies = ['numpy', 'ase']
 
 
 [project.optional-dependencies]
-tests = ['pytest', 'pytest-cov', 'rmsd', 'numdifftools', 'geometric']
+tests = ['pytest', 'pytest-cov', 'pytest-resource-path', 'rmsd',
+         'numdifftools', 'geometric']
 
 [build-system]
 requires = ['setuptools>=42']

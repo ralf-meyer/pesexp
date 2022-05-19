@@ -6,7 +6,6 @@ import ase.io
 from utils import g2_molecules
 from pesexp.geometry.connectivity import (find_connectivity,
                                           find_primitives)
-from pkg_resources import resource_filename, Requirement
 
 
 @pytest.mark.parametrize('name', g2_molecules.keys())
@@ -198,11 +197,9 @@ def test_find_primitives_on_simple_octahedron():
     assert planars == []
 
 
-def test_planar_methods_on_Fe_CO_6():
-    xyz_file = resource_filename(
-        Requirement.parse('molSimplify'),
-        'tests/optimize/inputs/homoleptic_octahedrals/Co_II_co.xyz')
-    atoms = ase.io.read(xyz_file)
+def test_planar_methods_on_Fe_CO_6(resource_path_root):
+    atoms = ase.io.read(
+        resource_path_root / 'homoleptic_octahedrals/Co_II_co.xyz')
     bonds = find_connectivity(atoms)
     bends, linear_bends, torsions, planars = find_primitives(
         atoms.get_positions(), bonds, planar_method='billeter')
@@ -231,11 +228,10 @@ def test_planar_methods_on_Fe_CO_6():
 
 
 @pytest.mark.parametrize('ligand', ['co', 'misc', 'water', 'pyr', 'furan'])
-def test_find_primitives_on_homoleptic_octahedrals(ligand):
+def test_find_primitives_on_homoleptic_octahedrals(resource_path_root, ligand):
     """Inspired by Janet et al. Inorg. Chem. 2019, 58, 10592-10606"""
-    xyz_file = resource_filename(
-        Requirement.parse('molSimplify'),
-        f'tests/optimize/inputs/homoleptic_octahedrals/Co_II_{ligand}.xyz')
+    xyz_file = (
+        resource_path_root / f'homoleptic_octahedrals/Co_II_{ligand}.xyz')
     atoms = ase.io.read(xyz_file)
     mol = geometric.molecule.Molecule(xyz_file)
 

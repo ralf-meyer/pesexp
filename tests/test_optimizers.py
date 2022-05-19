@@ -14,7 +14,6 @@ from pesexp.geometry.coordinate_systems import (CartesianCoordinates,
 from pesexp.optimizers import BFGS, LBFGS, RFO
 from pesexp.optimizers.convergence import ConvergenceMixin, TerachemConvergence
 from rmsd import kabsch_rmsd
-from pkg_resources import resource_filename, Requirement
 
 
 @pytest.mark.parametrize('optimizer', [BFGS, LBFGS, RFO])
@@ -160,17 +159,16 @@ def test_optimizers_on_organic_molecules(optimizer, mol, coord_set):
 @pytest.mark.parametrize('optimizer', [BFGS, LBFGS, RFO])
 @pytest.mark.parametrize('ligand', ['water'])
 @pytest.mark.parametrize('coord_set', ['cart', 'internal', 'dlc', 'anc'])
-def test_optimizers_on_homoleptic_TMCs(optimizer, ligand, coord_set):
+def test_optimizers_on_homoleptic_TMCs(resource_path_root, optimizer, ligand,
+                                       coord_set):
     """TODO: For now only works on water since UFF does not give reasonable
     results for the other ligands."""
     # check if openbabel version > 3.0. This is necessary as
     # OBForceField.GetGradient is not public for prior versions.
     pytest.importorskip('openbabel', minversion='3.0')
 
-    xyz_file = resource_filename(
-        Requirement.parse('molSimplify'),
-        f'tests/optimize/inputs/homoleptic_octahedrals/Co_II_{ligand}.xyz')
-    atoms = ase.io.read(xyz_file)
+    atoms = ase.io.read(
+        resource_path_root / f'homoleptic_octahedrals/Co_II_{ligand}.xyz')
     xyzs = atoms.get_positions()
     atoms.calc = OpenbabelFF(ff='UFF')
 
