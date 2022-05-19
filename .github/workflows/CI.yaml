@@ -30,6 +30,5 @@ jobs:
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v2
       with:
-        path_to_write_report: ./coverage/codecov_report.txt
-        directory: ./coverage/reports/
+        files: ./coverage.xml
         verbose: true
