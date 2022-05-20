@@ -83,8 +83,8 @@ def test_transition_state_mueller_brown_surface(optimizer, mu, atol=1e-2):
 @pytest.mark.parametrize('optimizer,mu', [(RFO, 1), (PRFO, 0)])
 def test_transition_state_ammonia(optimizer, mu):
     atoms = ase.build.molecule('NH3')
-    XTB = pytest.importorskip('xtb.ase.calculator.XTB')
-    atoms.calc = XTB(method='GFN2-xTB')
+    xtb = pytest.importorskip('xtb')
+    atoms.calc = xtb.ase.calculator.XTB(method='GFN2-xTB')
 
     # The plane spanned by the H atoms is at z=-.27
     atoms.positions[0, :] = [0., 0., -0.1]
@@ -103,8 +103,8 @@ def test_transition_state_ammonia(optimizer, mu):
 @pytest.mark.parametrize('optimizer,mu', [(RFO, 1), (PRFO, 0)])
 def test_transition_state_ethane(optimizer, mu):
     atoms = ase.build.molecule('C2H6')
-    XTB = pytest.importorskip('xtb.ase.calculator.XTB')
-    atoms.calc = XTB(method='GFN2-xTB')
+    xtb = pytest.importorskip('xtb')
+    atoms.calc = xtb.ase.calculator.XTB(method='GFN2-xTB')
 
     # Rotate one methyl group by 30 degrees about the z axis
     rot_mat = np.array([[np.sqrt(3)/2, -0.5, 0.],
