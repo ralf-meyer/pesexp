@@ -1,0 +1,422 @@
+Startfile from command line: h2.inp
+
+
+       ***********************************************************
+       *                    TeraChem v1.9-2018.11-dev            *
+       *                 Hg Version:                             *
+       *                   Development Version                   *
+       *                Compiled without textures                *
+       *           Chemistry at the Speed of Graphics!           *
+       ***********************************************************
+       * This program may only be used in connection with        *
+       * a valid license from PetaChem, LLC. Use of this program *
+       * or results thereof indicates acceptance of all terms    *
+       * and conditions stated in the license and that a valid   *
+       * license agreement between the user and PetaChem, LLC    *
+       * exists. PetaChem, LLC does not warrant the correctness  *
+       * of results or their suitability for any purpose.        *
+       * Please email bugs, suggestions, and comments to         *
+       *                  help@petachem.com                      *
+       *                                                         *
+       ***********************************************************
+
+
+       ***********************************************************
+       *  Compiled by crduan       Thu Nov 29 14:42:14 EST 2018  *
+       *  Supported architectures: sm_35 sm_50 sm_52 sm_61       *
+       *  Cuda compilation tools, release 8.0, V8.0.61           *
+       ***********************************************************
+
+
+ Job started   Wed Nov  3 12:44:50 2021
+ On gibraltar-11 (available memory: 12144 MB)
+
+######################################### RUNTIME INFO ##########################################
+terachem h2.inp 
+
+NVRM version: NVIDIA UNIX x86_64 Kernel Module  430.14  Wed May  8 01:10:53 UTC 2019
+GCC version:  gcc version 4.8.5 20150623 (Red Hat 4.8.5-39) (GCC) 
+
+	linux-vdso.so.1 =>  (0x00007ffe4bdd5000)
+	libcurl.so.4 => /lib64/libcurl.so.4 (0x00002b38411b8000)
+	libdftbplus.so => /opt/terachem/120318-cuda8-intel16/lib/libdftbplus.so (0x00002b3841422000)
+	libfsockets.so => /opt/terachem/120318-cuda8-intel16/lib/libfsockets.so (0x00002b3841941000)
+	libxmlf90.so => /opt/terachem/120318-cuda8-intel16/lib/libxmlf90.so (0x00002b3841b44000)
+	libOpenMM.so => /opt/OpenMM-7.1.1/lib/libOpenMM.so (0x00002b3841d69000)
+	libintbox.so.1 => /opt/terachem/120318-cuda8-intel16/lib/libintbox.so.1 (0x00002b384228a000)
+	libthcbox.so.1 => /opt/terachem/120318-cuda8-intel16/lib/libthcbox.so.1 (0x00002b385d52e000)
+	libgridbox.so.1 => /opt/terachem/120318-cuda8-intel16/lib/libgridbox.so.1 (0x00002b385ec50000)
+	libdftbox.so.1 => /opt/terachem/120318-cuda8-intel16/lib/libdftbox.so.1 (0x00002b385f114000)
+	libcibox.so.1 => /opt/terachem/120318-cuda8-intel16/lib/libcibox.so.1 (0x00002b385f3f9000)
+	libcuda.so.1 => /lib64/libcuda.so.1 (0x00002b385f776000)
+	libcudart.so.8.0 => /opt/terachem/120318-cuda8-intel16/lib/libcudart.so.8.0 (0x00002b38608e5000)
+	libcublas.so.8.0 => /opt/terachem/120318-cuda8-intel16/lib/libcublas.so.8.0 (0x00002b3860b4b000)
+	libcufft.so.8.0 => /opt/terachem/120318-cuda8-intel16/lib/libcufft.so.8.0 (0x00002b38635e3000)
+	libcusparse.so.8.0 => /opt/terachem/120318-cuda8-intel16/lib/libcusparse.so.8.0 (0x00002b386c432000)
+	libcrypto.so.10 => /lib64/libcrypto.so.10 (0x00002b386ef4d000)
+	libssl.so.10 => /lib64/libssl.so.10 (0x00002b386f3b0000)
+	libm.so.6 => /lib64/libm.so.6 (0x00002b386f622000)
+	libcilkrts.so.5 => /opt/terachem/120318-cuda8-intel16/lib/libcilkrts.so.5 (0x00002b386f924000)
+	libstdc++.so.6 => /lib64/libstdc++.so.6 (0x00002b386fb65000)
+	libgcc_s.so.1 => /lib64/libgcc_s.so.1 (0x00002b386fe6c000)
+	libpthread.so.0 => /lib64/libpthread.so.0 (0x00002b3870082000)
+	libc.so.6 => /lib64/libc.so.6 (0x00002b387029e000)
+	/lib64/ld-linux-x86-64.so.2 (0x00002b3840f94000)
+	libdl.so.2 => /lib64/libdl.so.2 (0x00002b387066c000)
+	libidn.so.11 => /lib64/libidn.so.11 (0x00002b3870870000)
+	libssh2.so.1 => /lib64/libssh2.so.1 (0x00002b3870aa3000)
+	libssl3.so => /lib64/libssl3.so (0x00002b3870cd0000)
+	libsmime3.so => /lib64/libsmime3.so (0x00002b3870f29000)
+	libnss3.so => /lib64/libnss3.so (0x00002b3871151000)
+	libnssutil3.so => /lib64/libnssutil3.so (0x00002b3871480000)
+	libplds4.so => /lib64/libplds4.so (0x00002b38716b0000)
+	libplc4.so => /lib64/libplc4.so (0x00002b38718b4000)
+	libnspr4.so => /lib64/libnspr4.so (0x00002b3871ab9000)
+	libgssapi_krb5.so.2 => /lib64/libgssapi_krb5.so.2 (0x00002b3871cf7000)
+	libkrb5.so.3 => /lib64/libkrb5.so.3 (0x00002b3871f44000)
+	libk5crypto.so.3 => /lib64/libk5crypto.so.3 (0x00002b387222d000)
+	libcom_err.so.2 => /lib64/libcom_err.so.2 (0x00002b3872460000)
+	liblber-2.4.so.2 => /lib64/liblber-2.4.so.2 (0x00002b3872664000)
+	libldap-2.4.so.2 => /lib64/libldap-2.4.so.2 (0x00002b3872873000)
+	libz.so.1 => /lib64/libz.so.1 (0x00002b3872ac8000)
+	libmkl_intel_lp64.so => /opt/intel/2016/compilers_and_libraries/linux/mkl/lib/intel64/libmkl_intel_lp64.so (0x00002b3872cde000)
+	libmkl_intel_thread.so => /opt/intel/2016/compilers_and_libraries/linux/mkl/lib/intel64/libmkl_intel_thread.so (0x00002b387361c000)
+	libmkl_core.so => /opt/intel/2016/compilers_and_libraries/linux/mkl/lib/intel64/libmkl_core.so (0x00002b3874973000)
+	libiomp5.so => /opt/intel/2016/compilers_and_libraries/linux/ipp/../compiler/lib/intel64/libiomp5.so (0x00002b3876258000)
+	libifport.so.5 => /opt/intel/2016/compilers_and_libraries/linux/ipp/../compiler/lib/intel64/libifport.so.5 (0x00002b3876599000)
+	libifcoremt.so.5 => /opt/intel/2016/compilers_and_libraries/linux/ipp/../compiler/lib/intel64/libifcoremt.so.5 (0x00002b38767c8000)
+	libimf.so => /opt/intel/2016/compilers_and_libraries/linux/ipp/../compiler/lib/intel64/libimf.so (0x00002b3876b5a000)
+	libsvml.so => /opt/intel/2016/compilers_and_libraries/linux/ipp/../compiler/lib/intel64/libsvml.so (0x00002b3877052000)
+	libintlc.so.5 => /opt/intel/2016/compilers_and_libraries/linux/ipp/../compiler/lib/intel64/libintlc.so.5 (0x00002b3877f11000)
+	librt.so.1 => /lib64/librt.so.1 (0x00002b3878170000)
+	libnvidia-fatbinaryloader.so.430.14 => /lib64/libnvidia-fatbinaryloader.so.430.14 (0x00002b3878378000)
+	libkrb5support.so.0 => /lib64/libkrb5support.so.0 (0x00002b38785c6000)
+	libkeyutils.so.1 => /lib64/libkeyutils.so.1 (0x00002b38787d6000)
+	libresolv.so.2 => /lib64/libresolv.so.2 (0x00002b38789da000)
+	libsasl2.so.3 => /lib64/libsasl2.so.3 (0x00002b3878bf3000)
+	libselinux.so.1 => /lib64/libselinux.so.1 (0x00002b3878e10000)
+	libcrypt.so.1 => /lib64/libcrypt.so.1 (0x00002b3879037000)
+	libpcre.so.1 => /lib64/libpcre.so.1 (0x00002b387926e000)
+	libfreebl3.so => /lib64/libfreebl3.so (0x00002b38794d0000)
+#################################################################################################
+
+Cannot find license.dat file in the TeraChem installation directory /opt/terachem/120318-cuda8-intel16
+
+
+TRYING THE NETWORK LICENSE...
+Connecting to license server '54.208.252.40' port '8877'...
+Connected!
+Checking your license...
+
+**************************************************************
+  Greetings, Martinez Group! You have 1000 licenses in total
+  IN USE: 11
+  AVAILABLE: 989
+**************************************************************
+
+Scratch directory: ./scr
+Random number seed: 1361147284
+
+XYZ coordinates h2.xyz
+Molden File Output: ./scr/h2.molden
+Using basis set: 6-31gs
+dmrgstart not found
+Spin multiplicity: 1
+DIIS will use up to 10 vectors.
+WF convergence threshold: 3.00e-05
+Using DIIS algorithm to converge WF
+Maximum number of SCF iterations: 100
+Incremental fock with rebuild every 8 iterations
+Will switch to conventional Fock if diffuse functions are detected
+X-matrix tolerance: 1.00e-04
+PRECISION: DYNAMIC
+DFT Functional requested: b3lyp
+Method: B3LYP 
+  Hartree-Fock exact exchange:          0.20 
+  Slater exchange functional:           0.80 
+  Becke 1988 exchange functional:       0.72 
+  Lee-Yang-Parr correlation functional: 0.81 
+  VWN(I) correlation functional:        0.19 
+Wavefunction: RESTRICTED
+DFT grid type: 1
+Using dynamic DFT grids.
+Initial guess generated by maximum overlap
+
+********************************************
+******* RUNNING GEOMETRY OPTMIZATION *******
+********************************************
+
+Geometry optimization parameters:
+Max number of optimization cycles: 1000
+Convergence threshold (Max grad component): 4.50e-04
+Convergence threshold (energy change): 1.00e-06
+Maximum of RMSD change allowed between steps is 0.500000
+using L-BFGS method
+Optimization checkpoint file will be dumped every 10 cycles
+Atomic displacement in finite-difference Hessian (Bohr) 0.003000
+Each step will be scaled by 1.00
+Maximum step size in internal coordinates 0.50
+Minimization SCF guess will be regenerated every 10 steps
+Job started from scratch
+SCF:   Initial guess is taken from previous step
+
+using 1 out of 1 CUDA devices
+   Device 0:      GeForce GTX 780,  3022MB, CC 3.5 -- CPU THREAD 0
+-------------------------------------------------------------------
+Compiled with MAGMA support.  MAGMA parameters:
+    Matrices larger than 5000 square will be treated with MAGMA
+       (Change by setting the MagmaMinN environment variable)
+    Magma will use 1 out of 1 GPUs
+       (Change by setting the MagmaNGPUs environment variable)
+-------------------------------------------------------------------
+ CPU Memory Available: 16092.50 MegaWords 
+ GPU Memory Available: 121.76 MegaWords 
+ Maximum recommended basis set size: 4000 basis functions
+ (limited by GPU memory)
+-------------------------------------------------------------------
+Not using d-functions. Configuring GPUs accordingly.
+0: CUBLAS initialized, available GPU memory: 1737MB
+
+****** QM coordinates ******
+H         0.0000000000         0.0000000000         0.0000000000  
+H         0.0000000000         0.0000000000         0.7000000000  
+
+Basis set:       6-31gs
+Total atoms:     2
+Total charge:    0
+Total electrons: 2 (1-alpha, 1-beta)
+Number electrons modeled by ECPs: 0
+Total orbitals:  4
+Total AO shells: 4 (4 S-shells; 0 P-shells; 0 D-shells; 0 F-shells; 0 G-shells)
+Spin multiplicity: 1
+Nuclear repulsion energy (QM atoms): 0.755967498914 a.u.
+
+-------------------------------------------------------
+0 additional frames found in h2.xyz
+-------------------------------------------------------
+-=#=-----------------------------------=#=-
+-=#=-   Geometry Optimizer Started    -=#=-
+-=#=-----------------------------------=#=-
+-=#=- Using Translation Rotation Internal Coordinates (TRIC)
+-=#=- Building Primitive Internal Coordinates -=#=- 
+-=#=-  Internal Coordinate Summary   -=#=-
+-=#     Total       : 7
+-=#     Constraint  : 0
+-=#     Distance    : 1
+-=#     Angle       : 0
+-=#     OutofPlane  : 0
+-=#     Dihedral    : 0
+-=#     Cartesian-X : 2
+-=#     Cartesian-Y : 2
+-=#     Cartesian-Z : 2
+-=#     Translation-X : 0
+-=#     Translation-Y : 0
+-=#     Translation-Z : 0
+-=#     Rotator     : 0
+-=#  Finished Primitive Internal Coordinates
+-=#  Generating Delocalized Coordinates...
+-=#  Found 6 Delocalized Coordinates
+
+Using WF guess from previous time step during MD.
+-=#=-   Getting Energy and Gradient   -=#=-
+-=#=-      (We'll Be Right Back)      -=#=-
+Setting up the DFT grid...
+time to set the grid = 0.00 s
+DFT grid points: 2126 (1063 points/atom)
+Setting up the DFT grid...
+time to set the grid = 0.00 s
+DFT grid points: 5820 (2910 points/atom)
+
+                      *** Start SCF Iterations ***
+
+ Iter     DIIS Error       Energy change      Electrons        XC Energy           Energy        Time(s)
+----------------------------------------------------------------------------------------------------------
+         >>> Purifying P... IDMP = 2.22e-16 <<<
+THRESPDP set to 1.00e+00
+                >>> SWITCHING TO GRID 1 <<<
+   1     0.3448478969  -668400.6155266302  266851.9402960028  -668399.9942428706  -668400.6155266302     0.02  
+THRESPDP set to 4.96e-06
+                >>> SWITCHING TO GRID 0 <<<
+   2     0.0623502708  +668399.4431656877     2.0000006315    -0.5997728172      -1.1723609425     0.00  
+   3     0.0020768677      -0.0017612363     2.0000002266    -0.5843838240      -1.1741221788     0.00  
+                >>> SWITCHING TO GRID 1 <<<
+   4     0.0005384574      -0.0000036385     2.0000060422    -0.5841799130      -1.1741258172     0.01  
+   5     0.0000830024      -0.0000001076     2.0000060412    -0.5841536941      -1.1741259249     0.01  
+   6     0.0000002477      -0.0000000031     2.0000060415    -0.5841615473      -1.1741259279     0.01  
+----------------------------------------------------------------------------------------------------------
+FINAL ENERGY: -1.1741259279 a.u.
+CENTER OF MASS: {0.000000, 0.000000, 0.350000} ANGS
+DIPOLE MOMENT: {0.000000, 0.000000, -0.000001} (|D| = 0.000001) DEBYE
+GPU Memory: 1637 Mb
+
+Running Mulliken population analysis...
+
+
+Gradient units are Hartree/Bohr
+---------------------------------------------------
+        dE/dX            dE/dY            dE/dZ
+   -0.0000000000     0.0000000000     0.0352256211
+    0.0000000000    -0.0000000000    -0.0352256211
+-=#=-    Now Returning to Optimizer   -=#=-
+Make new history opbject
+Add point to history
+Setup optimizer object
+-=#=-       End of Initialization     -=#=-
+-=#=-  Checking Convergence Criteria  -=#=-
+-=#@    Cycle       Energy          Delta-E   Gradient-RMS   Gradient-Max   Displace-RMS   Displace-Max
+-=#@                       Crit:  1.000e-06      3.000e-04      4.500e-04      1.200e-03      1.800e-03 
+-=#@  ---------------------------------------------------------------------------------------------------
+-=#@      0      -1.1741259279        -     -    3.523e-02 N    3.523e-02 N        -     -        -     -
+-=#=-----------------------------------=#=-
+-=#=-      Optimization Cycle     1   -=#=-
+-=#=-----------------------------------=#=-
+-=#  Finding Optimization Step, Current Trust Radius: 1.0000e-01
+-=#  Cartesian Step Size: 1.9588e-02, Expected Delta-E: -1.3039e-03
+-=#=-   Getting Energy and Gradient   -=#=-
+-=#=-      (We'll Be Right Back)      -=#=-
+Setting up the DFT grid...
+time to set the grid = 0.00 s
+DFT grid points: 2128 (1064 points/atom)
+Setting up the DFT grid...
+time to set the grid = 0.00 s
+DFT grid points: 5820 (2910 points/atom)
+
+                      *** Start SCF Iterations ***
+
+ Iter     DIIS Error       Energy change      Electrons        XC Energy           Energy        Time(s)
+----------------------------------------------------------------------------------------------------------
+         >>> Purifying P... IDMP = 3.33e-16 <<<
+THRESPDP set to 4.96e-06
+                >>> SWITCHING TO GRID 1 <<<
+   1     0.0239853246      -1.1752304107     2.0000046435    -0.5793951413      -1.1752304107     0.01  
+                >>> SWITCHING TO GRID 0 <<<
+   2     0.0038497706      -0.0002437845     2.0000109449    -0.5725829989      -1.1754741952     0.00  
+                >>> SWITCHING TO GRID 1 <<<
+   3     0.0000198615      -0.0000008971     2.0000044815    -0.5735170562      -1.1754750922     0.01  
+   4     0.0000059701      -0.0000000001     2.0000044816    -0.5735204460      -1.1754750923     0.01  
+----------------------------------------------------------------------------------------------------------
+FINAL ENERGY: -1.1754750923 a.u.
+CENTER OF MASS: {0.000000, 0.000000, 0.350000} ANGS
+DIPOLE MOMENT: {0.000000, -0.000000, -0.000000} (|D| = 0.000000) DEBYE
+GPU Memory: 1637 Mb
+
+Running Mulliken population analysis...
+
+
+Gradient units are Hartree/Bohr
+---------------------------------------------------
+        dE/dX            dE/dY            dE/dZ
+   -0.0000000000    -0.0000000000     0.0026043394
+    0.0000000000     0.0000000000    -0.0026043394
+-=#=-    Now Returning to Optimizer   -=#=-
+-=#=-  Checking Convergence Criteria  -=#=-
+-=#     Cycle       Energy          Delta-E   Gradient-RMS   Gradient-Max   Displace-RMS   Displace-Max
+-=#                        Crit:  1.000e-06      3.000e-04      4.500e-04      1.200e-03      1.800e-03 
+-=#   ---------------------------------------------------------------------------------------------------
+-=#@      1      -1.1754750923   -1.349e-03 N    2.604e-03 N    2.604e-03 N    1.959e-02 N    1.959e-02 N
+-=#  Adjusting Trust Radius
+-=#  Step Quality:   1.0347 (Good)
+-=#  Increasing trust radius 1.0000e-01 -> 1.4142e-01
+-=#  Updating Hessian with BFGS
+-=#  Hessian Eigenvalues:  2.9376e-01  5.0000e-02  5.0000e-02 ...  5.0000e-02  5.0000e-02  5.0000e-02
+-=#=-----------------------------------=#=-
+-=#=-      Optimization Cycle     2   -=#=-
+-=#=-----------------------------------=#=-
+-=#  Finding Optimization Step, Current Trust Radius: 1.4142e-01
+-=#  Cartesian Step Size: 1.5638e-03, Expected Delta-E: -7.6963e-06
+-=#=-   Getting Energy and Gradient   -=#=-
+-=#=-      (We'll Be Right Back)      -=#=-
+Setting up the DFT grid...
+time to set the grid = 0.00 s
+DFT grid points: 2128 (1064 points/atom)
+Setting up the DFT grid...
+time to set the grid = 0.00 s
+DFT grid points: 5828 (2914 points/atom)
+
+                      *** Start SCF Iterations ***
+
+ Iter     DIIS Error       Energy change      Electrons        XC Energy           Energy        Time(s)
+----------------------------------------------------------------------------------------------------------
+         >>> Purifying P... IDMP = 2.22e-16 <<<
+THRESPDP set to 4.96e-06
+                >>> SWITCHING TO GRID 1 <<<
+   1     0.0018695326      -1.1754822716     2.0000043751    -0.5731537508      -1.1754822716     0.01  
+   2     0.0002995702      -0.0000014458     2.0000043610    -0.5726250106      -1.1754837174     0.01  
+   3     0.0000000049      -0.0000000381     2.0000043629    -0.5726980130      -1.1754837555     0.01  
+----------------------------------------------------------------------------------------------------------
+FINAL ENERGY: -1.1754837555 a.u.
+CENTER OF MASS: {0.000000, 0.000000, 0.350000} ANGS
+DIPOLE MOMENT: {0.000000, 0.000000, -0.000000} (|D| = 0.000000) DEBYE
+GPU Memory: 1637 Mb
+
+Running Mulliken population analysis...
+
+
+Gradient units are Hartree/Bohr
+---------------------------------------------------
+        dE/dX            dE/dY            dE/dZ
+    0.0000000000     0.0000000000     0.0003372691
+   -0.0000000000    -0.0000000000    -0.0003372691
+-=#=-    Now Returning to Optimizer   -=#=-
+-=#=-  Checking Convergence Criteria  -=#=-
+-=#     Cycle       Energy          Delta-E   Gradient-RMS   Gradient-Max   Displace-RMS   Displace-Max
+-=#                        Crit:  1.000e-06      3.000e-04      4.500e-04      1.200e-03      1.800e-03 
+-=#   ---------------------------------------------------------------------------------------------------
+-=#@      2      -1.1754837555   -8.663e-06 N    3.373e-04 N    3.373e-04 Y    1.564e-03 N    1.564e-03 Y
+-=#  Adjusting Trust Radius
+-=#  Step Quality:   1.1256 (Good)
+-=#  Increasing trust radius 1.4142e-01 -> 2.0000e-01
+-=#  Updating Hessian with BFGS
+-=#  Hessian Eigenvalues:  2.5572e-01  5.0000e-02  5.0000e-02 ...  5.0000e-02  5.0000e-02  5.0000e-02
+-=#=-----------------------------------=#=-
+-=#=-      Optimization Cycle     3   -=#=-
+-=#=-----------------------------------=#=-
+-=#  Finding Optimization Step, Current Trust Radius: 2.0000e-01
+-=#  Cartesian Step Size: 2.3265e-04, Expected Delta-E: -1.4828e-07
+-=#=-   Getting Energy and Gradient   -=#=-
+-=#=-      (We'll Be Right Back)      -=#=-
+Setting up the DFT grid...
+time to set the grid = 0.00 s
+DFT grid points: 2128 (1064 points/atom)
+Setting up the DFT grid...
+time to set the grid = 0.00 s
+DFT grid points: 5828 (2914 points/atom)
+
+                      *** Start SCF Iterations ***
+
+ Iter     DIIS Error       Energy change      Electrons        XC Energy           Energy        Time(s)
+----------------------------------------------------------------------------------------------------------
+         >>> Purifying P... IDMP = 5.55e-16 <<<
+THRESPDP set to 4.96e-06
+                >>> SWITCHING TO GRID 1 <<<
+   1     0.0002785038      -1.1754838727     2.0000043474    -0.5726436264      -1.1754838727     0.01  
+   2     0.0000445868      -0.0000000321     2.0000043453    -0.5725649004      -1.1754839048     0.01  
+   3     0.0000000001      -0.0000000009     2.0000043456    -0.5725757642      -1.1754839056     0.01  
+----------------------------------------------------------------------------------------------------------
+FINAL ENERGY: -1.1754839056 a.u.
+CENTER OF MASS: {0.000000, -0.000000, 0.350000} ANGS
+DIPOLE MOMENT: {-0.000000, -0.000000, -0.000000} (|D| = 0.000000) DEBYE
+GPU Memory: 1637 Mb
+
+Running Mulliken population analysis...
+
+
+Gradient units are Hartree/Bohr
+---------------------------------------------------
+        dE/dX            dE/dY            dE/dZ
+   -0.0000000000    -0.0000000000     0.0000042754
+    0.0000000000     0.0000000000    -0.0000042754
+-=#=-    Now Returning to Optimizer   -=#=-
+-=#=-  Checking Convergence Criteria  -=#=-
+-=#     Cycle       Energy          Delta-E   Gradient-RMS   Gradient-Max   Displace-RMS   Displace-Max
+-=#                        Crit:  1.000e-06      3.000e-04      4.500e-04      1.200e-03      1.800e-03 
+-=#   ---------------------------------------------------------------------------------------------------
+-=#@      3      -1.1754839056   -1.501e-07 Y    4.275e-06 Y    4.275e-06 Y    2.326e-04 Y    2.326e-04 Y
+-=#=-----------------------------------=#=-
+-=#=-     Optimization Converged.     -=#=-
+-=#=-----------------------------------=#=-
+Writing out molden info
+Total processing time: 0.17 sec 
+
+ Job finished: Wed Nov  3 12:44:54 2021
+

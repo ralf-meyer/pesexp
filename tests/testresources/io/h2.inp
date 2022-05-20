@@ -1,0 +1,7 @@
+# Simple test file
+basis 6-31g*
+coordinates h2.xyz
+charge 0
+method b3lyp
+run gradient
+end
