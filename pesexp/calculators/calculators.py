@@ -219,7 +219,7 @@ class ThreeDCalculator(Calculator):
         y = xyzs[0, 1]
         dy = np.zeros_like(xyzs)
         dy[0, 1] = 1.0
-        z = xyzs[0, 1]
+        z = xyzs[0, 2]
         dz = np.zeros_like(xyzs)
         dz[0, 2] = 1.0
 
@@ -228,10 +228,10 @@ class ThreeDCalculator(Calculator):
         self.results['forces'] = -gx * dx - gy * dy - gz * dz
 
 
-class GenericSaddlePointCalculator(ThreeDCalculator):
+class SecondOrderSaddlePointCalculator(ThreeDCalculator):
 
     def energy(self, x, y, z):
-        return x**2 - y**2
+        return x**2 - y**2 + (z**4 - z**2)
 
     def gradient(self, x, y, z):
-        return 2*x, -2*y, 0.
+        return 2*x, -2*y, (4*z**3 - 2*z)
