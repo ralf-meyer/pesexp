@@ -10,13 +10,14 @@ from pesexp.geometry.coordinate_systems import (InternalCoordinates,
                                                 DelocalizedCoordinates)
 from pesexp.optimizers import RFO, PRFO
 from pesexp.hessians.hessian_guesses import numerical_hessian
-from pesexp.calculators import (CerjanMillerSurface,
-                                AdamsSurface,
-                                MuellerBrownSurface)
+from pesexp.calculators.calculators import (CerjanMillerSurface,
+                                            AdamsSurface,
+                                            MuellerBrownSurface,
+                                            GenericSaddlePointCalculator)
 
 
 @pytest.mark.parametrize('optimizer,mu', [(RFO, 1), (PRFO, 0)])
-def test_transition_state_cerjan_miller_surface(optimizer, mu):
+def test_transition_state_cerjan_miller_surface(optimizer, mu, atol=1e-2):
     atoms = ase.atoms.Atoms(positions=np.array([[0.05, 0.05, 0.]]))
     atoms.calc = CerjanMillerSurface()
     coord_set = InternalCoordinates([Cartesian(0, axis=0),
@@ -26,10 +27,7 @@ def test_transition_state_cerjan_miller_surface(optimizer, mu):
     opt.run(fmax=0.005, steps=100)
     assert opt.converged()
     q = coord_set.to_internals(atoms.get_positions())
-    # q[0] should be close to 1
-    assert abs(abs(q[0]) - 1.0) < 1e-2
-    # q[1] should be close to 0
-    assert abs(q[1]) < 1e-2
+    np.testing.assert_allclose(q, (1.0, 0.0), atol=atol)
 
 
 @pytest.mark.parametrize('optimizer,mu', [(RFO, 1), (PRFO, 0)])
@@ -44,7 +42,7 @@ def test_transition_state_adams_surface(optimizer, mu, atol=1e-2):
     opt.run(fmax=0.005, steps=100)
     assert opt.converged()
     q = coord_set.to_internals(atoms.get_positions())
-    np.testing.assert_allclose(q, (2.2410, 0.4419), atol)
+    np.testing.assert_allclose(q, (2.2410, 0.4419), atol=atol)
 
     # Should end up at transition state (-0.1985, -2.2793)
     atoms.set_positions(np.array([[0.05, -0.05, 0.]]))
@@ -53,7 +51,7 @@ def test_transition_state_adams_surface(optimizer, mu, atol=1e-2):
     opt.run(fmax=0.005, steps=100)
     assert opt.converged()
     q = coord_set.to_internals(atoms.get_positions())
-    np.testing.assert_allclose(q, (-0.1985, -2.2793), atol)
+    np.testing.assert_allclose(q, (-0.1985, -2.2793), atol=atol)
 
 
 @pytest.mark.parametrize('optimizer,mu', [(RFO, 1), (PRFO, 0)])
@@ -68,7 +66,7 @@ def test_transition_state_mueller_brown_surface(optimizer, mu, atol=1e-2):
     opt.run(fmax=0.005, steps=100)
     assert opt.converged()
     q = coord_set.to_internals(atoms.get_positions())
-    np.testing.assert_allclose(q, (-0.8220, 0.6243), atol)
+    np.testing.assert_allclose(q, (-0.8220, 0.6243), atol=atol)
 
     # Start from other side
     atoms.set_positions(np.array([[-1,  0.7, 0.]]))
@@ -77,7 +75,25 @@ def test_transition_state_mueller_brown_surface(optimizer, mu, atol=1e-2):
     opt.run(fmax=0.005, steps=100)
     assert opt.converged()
     q = coord_set.to_internals(atoms.get_positions())
-    np.testing.assert_allclose(q, (-0.8220, 0.6243), atol)
+    np.testing.assert_allclose(q, (-0.8220, 0.6243), atol=atol)
+
+
+@pytest.mark.parametrize('optimizer,mu', [(PRFO, 0)])
+def test_transition_state_zero_mode(optimizer, mu, atol=1e-2):
+    """This function tests the behavior of TS-optimizers when there
+    is an additional zero frequency mode. For now only pRFO is able
+    to handle this."""
+    atoms = ase.atoms.Atoms(positions=np.array([[1., 2., 0.0]]))
+    atoms.calc = GenericSaddlePointCalculator()
+    coord_set = InternalCoordinates([Cartesian(0, axis=0),
+                                     Cartesian(0, axis=1),
+                                     Cartesian(0, axis=2)])
+    H = numerical_hessian(atoms)
+    opt = optimizer(atoms, coordinate_set=coord_set, H0=H, mu=mu, maxstep=0.05)
+    opt.run(fmax=0.005, steps=100)
+    assert opt.converged()
+    q = coord_set.to_internals(atoms.get_positions())
+    np.testing.assert_allclose(q, (0., 0., 0.0), atol=atol)
 
 
 @pytest.mark.parametrize('optimizer,mu', [(RFO, 1), (PRFO, 0)])

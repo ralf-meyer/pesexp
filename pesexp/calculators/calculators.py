@@ -201,3 +201,37 @@ class MuellerBrownSurface(TwoDCalculator):
         v = self._v(x, y)
         return ((2*self.a*(x - self.x0) + self.b*(y - self.y0)) @ v,
                 (self.b*(x - self.x0) + 2*self.c*(y - self.y0)) @ v)
+
+
+class ThreeDCalculator(Calculator):
+    """Base class for three dimensional benchmark systems."""
+
+    implemented_properties = ['energy', 'forces']
+
+    def calculate(self, atoms=None, properties=['energy'],
+                  system_changes=all_changes):
+        Calculator.calculate(self, atoms, properties, system_changes)
+
+        xyzs = self.atoms.get_positions()
+        x = xyzs[0, 0]
+        dx = np.zeros_like(xyzs)
+        dx[0, 0] = 1.0
+        y = xyzs[0, 1]
+        dy = np.zeros_like(xyzs)
+        dy[0, 1] = 1.0
+        z = xyzs[0, 1]
+        dz = np.zeros_like(xyzs)
+        dz[0, 2] = 1.0
+
+        self.results['energy'] = self.energy(x, y, z)
+        gx, gy, gz = self.gradient(x, y, z)
+        self.results['forces'] = -gx * dx - gy * dy - gz * dz
+
+
+class GenericSaddlePointCalculator(ThreeDCalculator):
+
+    def energy(self, x, y, z):
+        return x**2 - y**2
+
+    def gradient(self, x, y, z):
+        return 2*x, -2*y, 0.
