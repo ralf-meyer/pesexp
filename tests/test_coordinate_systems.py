@@ -229,11 +229,10 @@ def test_difficult_backtransformations():
 
 
 def test_misc_6_failure(resource_path_root):
-    """For this structure the default threshold used in DLCs build function
-    yields a redundant set of coordinates."""
+    """For this structure the previous default threshold (1e-10) used in DLCs
+    build function yielded a redundant set of coordinates."""
     atoms = ase.io.read(resource_path_root / 'previous_failures'
                         / 'co_ii_misc_6_s_2.xyz')
-    # To get the correct number use kwarg: coord_kwargs=dict(threshold=1e-7)
     coord_sys = get_coordinate_system(atoms, 'dlc')
-    # Two redundant coordinates, therefore 3N - 4
-    assert coord_sys.size() == 3*len(atoms) - 4
+    # Assert that the coordinate system has the correct size.
+    assert coord_sys.size() == 3*len(atoms) - 6

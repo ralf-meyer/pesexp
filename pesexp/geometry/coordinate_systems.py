@@ -157,7 +157,7 @@ class InternalCoordinates(CoordinateSystem):
 
 class DelocalizedCoordinates(InternalCoordinates):
 
-    def __init__(self, primitives, xyzs, threshold=1e-10):
+    def __init__(self, primitives, xyzs, threshold=1e-6):
         InternalCoordinates.__init__(self, primitives)
         self.threshold = threshold
         self.delocalize(xyzs)
