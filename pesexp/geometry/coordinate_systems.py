@@ -169,6 +169,9 @@ class DelocalizedCoordinates(InternalCoordinates):
         w, v = np.linalg.eigh(G)
         # Set of nonredundant eigenvectors (eigenvalue =/= 0)
         self.U = v[:, np.abs(w) > self.threshold].copy()
+        if self.size() != xyzs.size - 6:
+            warn(f'DelocalizedCoordinates uses {self.size()} coordinates '
+                 f'for {len(xyzs)} atoms. (3N - 6 = {xyzs.size - 6})')
 
     def size(self):
         return self.U.shape[1]
