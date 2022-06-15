@@ -286,6 +286,29 @@ def test_find_primitives_on_homoleptic_octahedrals(resource_path_root, ligand):
     assert sorted(dihedrals) == sorted(dihedrals_ref)
 
 
+def test_connectivity_ClF3():
+    atoms = g2_molecules['ClF3']['atoms']
+    bonds = find_connectivity(atoms)
+    assert bonds == [(0, 1), (0, 2), (0, 3)]
+
+    bends, linear_bends, dihedrals, planars = find_primitives(
+        atoms.get_positions(), bonds, planar_method='molsimplify')
+
+    # TODO: Fix this
+    # assert bends == [(1, 0, 2), (1, 0, 3)]
+    assert linear_bends == []
+    assert dihedrals == []
+    assert planars == [(0, 1, 2, 3)]
+
+    bends, linear_bends, dihedrals, planars = find_primitives(
+        atoms.get_positions(), bonds, planar_method='billeter')
+    print(bends, linear_bends, dihedrals, planars)
+    assert bends == [(1, 0, 3), (2, 0, 3)]
+    assert linear_bends == []
+    assert dihedrals == []
+    assert planars == [(0, 2, 1, 3)]
+
+
 def test_connectivity_furan_6_failure(resource_path_root):
     """Tests the get primitives function on a calculation that has failed
     during production runs."""
