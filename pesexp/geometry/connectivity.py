@@ -54,7 +54,7 @@ def find_connectivity(atoms, threshold=1.25, connect_fragments=True):
                 fragment = []
                 fragments.append(depth_first_search(fragment, i, visited))
 
-        # If there are more than 1 fragment connect shortest distance atoms
+        # If there is more than 1 fragment: connect shortest distance atoms
         while len(fragments) > 1:
             # Merge first fragment with nearest fragment by adding a bond
             r_min = np.inf
@@ -125,11 +125,8 @@ def find_planars_molsimplify(a, neighbors, xyzs, planar_threshold):
     max_area = 0.
     for (ai, aj, ak) in itertools.combinations(neighbors[a], 3):
         r_ai = xyzs[ai, :] - xyzs[a, :]
-        n_ai = r_ai / np.linalg.norm(r_ai)
         r_aj = xyzs[aj, :] - xyzs[a, :]
-        n_aj = r_aj / np.linalg.norm(r_aj)
         r_ak = xyzs[ak, :] - xyzs[a, :]
-        n_ak = r_ak / np.linalg.norm(r_ak)
         n1 = np.cross(r_ai, r_aj)
         if np.sum(n1**2) > 0:  # Linear cases lead to division by zero
             n1 /= np.linalg.norm(n1)
@@ -144,6 +141,11 @@ def find_planars_molsimplify(a, neighbors, xyzs, planar_threshold):
                 or np.abs(n3.dot(n1)) > planar_threshold):
             # If a structure is identified as non-planar return empty lists
             return [], []
+
+        # Calculate area spanned by the triange (ai, aj, ak)
+        n_ai = r_ai / np.linalg.norm(r_ai)
+        n_aj = r_aj / np.linalg.norm(r_aj)
+        n_ak = r_ak / np.linalg.norm(r_ak)
         area = 0.5 * (np.linalg.norm(np.cross(n_ai, n_aj))
                       + np.linalg.norm(np.cross(n_aj, n_ak))
                       + np.linalg.norm(np.cross(n_ak, n_ai)))
@@ -151,7 +153,13 @@ def find_planars_molsimplify(a, neighbors, xyzs, planar_threshold):
             max_area = area
             planar = (a, ai, aj, ak)
             # TODO better heuristic of which bend to remove
-            bend = (ai, a, aj)
+            # Use (ai, a, ak) unless it is close to linear in which case
+            # (ai, a, aj) is used:
+            cos_t = cos_angle(r_ai, r_aj)
+            if np.abs(cos_t) < 0.95:
+                bend = (ai, a, aj)
+            else:
+                bend = (ai, a, ak)
     return [bend], [planar]
 
 
@@ -282,7 +290,8 @@ def find_primitives(xyzs, bonds, linear_flag=True, linear_threshold=5.,
                                         and (r, q, p, o) not in torsions):
                                     torsions.append((o, p, q, r))
         # "If an atom is connected to more than two atoms" and the threshold
-        # is small enough to be exceeded.
+        # is small enough to be exceeded. TODO: Switch to an enum based
+        # implementation of planar method
         if len(neighbors[a]) > 2 and planar_threshold < 1.0:
             if planar_method.lower() == 'billeter':
                 bends_to_remove, planars_to_append = find_planars_billeter(
