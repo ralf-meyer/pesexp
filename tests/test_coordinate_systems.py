@@ -1,4 +1,5 @@
 import pytest
+import ase.io
 import numpy as np
 import geometric.internal
 from utils import g2_molecules
@@ -6,7 +7,8 @@ from rmsd import kabsch_rmsd
 from pesexp.geometry.primitives import (Distance, Angle,
                                         LinearAngle, Dihedral, Improper)
 from pesexp.geometry.coordinate_systems import (InternalCoordinates,
-                                                DelocalizedCoordinates)
+                                                DelocalizedCoordinates,
+                                                get_coordinate_system)
 
 
 @pytest.mark.parametrize('name', g2_molecules.keys())
@@ -224,3 +226,14 @@ def test_difficult_backtransformations():
     # Only works after slightly decreasing the step size, fails if scaling
     # factor is omitted
     _ = coord_set.to_cartesians(0.95*dq, xyzs_ref)
+
+
+def test_misc_6_failure(resource_path_root):
+    """For this structure the default threshold used in DLCs build function
+    yields a redundant set of coordinates."""
+    atoms = ase.io.read(resource_path_root / 'previous_failures'
+                        / 'co_ii_misc_6_s_2.xyz')
+    # To get the correct number use kwarg: coord_kwargs=dict(threshold=1e-7)
+    coord_sys = get_coordinate_system(atoms, 'dlc')
+    # Two redundant coordinates, therefore 3N - 4
+    assert coord_sys.size() == 3*len(atoms) - 4
