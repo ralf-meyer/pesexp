@@ -5,7 +5,8 @@ import ase.atoms
 import ase.io
 from utils import g2_molecules
 from pesexp.geometry.connectivity import (find_connectivity,
-                                          find_primitives)
+                                          find_primitives,
+                                          get_primitives)
 
 
 @pytest.mark.parametrize('name', g2_molecules.keys())
@@ -283,3 +284,25 @@ def test_find_primitives_on_homoleptic_octahedrals(resource_path_root, ligand):
                     continue
             dihedrals_ref.append((ic.a, ic.b, ic.c, ic.d))
     assert sorted(dihedrals) == sorted(dihedrals_ref)
+
+
+def test_connectivity_furan_6_failure(resource_path_root):
+    """Tests the get primitives function on a calculation that has failed
+    during production runs."""
+
+    atoms = ase.io.read(
+        resource_path_root / 'previous_failures'
+        / 'co_oct_2_furan_6_s_2.xyz')
+    prims = get_primitives(atoms)
+    # Check if the set of primitives is complete:
+    xyzs = atoms.get_positions()
+    B = np.zeros((len(prims), xyzs.size))
+    for i, prim in enumerate(prims):
+        B[i] = prim.derivative(xyzs)
+    P = np.linalg.pinv(B) @ B
+    _, s, _ = np.linalg.svd(P)
+    # Count how many degrees of freedom are lost by transforming to the
+    # internal space and back again (should be 6) characterized by close to
+    # zeros singular values
+    lost_df = np.sum(s < 1e-10)
+    assert lost_df == 6
