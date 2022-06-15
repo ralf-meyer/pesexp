@@ -292,7 +292,7 @@ def test_connectivity_furan_6_failure(resource_path_root):
 
     atoms = ase.io.read(
         resource_path_root / 'previous_failures'
-        / 'co_oct_2_furan_6_s_2.xyz')
+        / 'co_ii_furan_6_s_2.xyz')
     prims = get_primitives(atoms)
     # Check if the set of primitives is complete:
     xyzs = atoms.get_positions()
