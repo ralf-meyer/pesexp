@@ -2,6 +2,7 @@ import time
 import pickle
 import numpy as np
 from pesexp.utils.exceptions import ConvergenceError
+from pesexp.geometry.utils import check_colinear
 from pesexp.geometry.connectivity import get_primitives
 from pesexp.hessians.hessian_guesses import LindhHessian
 from warnings import warn
@@ -170,8 +171,14 @@ class DelocalizedCoordinates(InternalCoordinates):
         # Set of nonredundant eigenvectors (eigenvalue =/= 0)
         self.U = v[:, np.abs(w) > self.threshold].copy()
         if self.size() != xyzs.size - 6:
-            warn(f'DelocalizedCoordinates uses {self.size()} coordinates '
-                 f'for {len(xyzs)} atoms. (3N - 6 = {xyzs.size - 6})')
+            if check_colinear(xyzs):
+                if self.size() != xyzs.size - 5:
+                    warn(f'DelocalizedCoordinates found {self.size()} '
+                         f'coordinates, expected 3N - 5 = {xyzs.size - 5} '
+                         '(Linear molecule).')
+            else:
+                warn(f'DelocalizedCoordinates found {self.size()} coordinates,'
+                     f' expected 3N - 6 = {xyzs.size - 6}')
 
     def size(self):
         return self.U.shape[1]
