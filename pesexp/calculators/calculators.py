@@ -203,6 +203,46 @@ class MuellerBrownSurface(TwoDCalculator):
                 (self.b*(x - self.x0) + 2*self.c*(y - self.y0)) @ v)
 
 
+class LEPSPotential(TwoDCalculator):
+    """From https://theory.cm.utexas.edu/henkelman/pubs/jonsson98_385.pdf"""
+    a = 0.05
+    b = 0.30
+    c = 0.05
+    d_AB = 4.746
+    d_BC = 4.746
+    d_AC = 3.445
+    r0 = 0.742
+    alpha = 1.942
+
+    def energy(self, r_AB, r_BC):
+        r_AC = r_AB + r_BC
+        Q_AB = self.d_AB / 2 * (1.5 * np.exp(-2*self.alpha*(r_AB - self.r0))
+                                - np.exp(-self.alpha*(r_AB - self.r0)))
+        Q_BC = self.d_BC / 2 * (1.5 * np.exp(-2*self.alpha*(r_BC - self.r0))
+                                - np.exp(-self.alpha*(r_BC - self.r0)))
+        Q_AC = self.d_AC / 2 * (1.5 * np.exp(-2*self.alpha*(r_AC - self.r0))
+                                - np.exp(-self.alpha*(r_AC - self.r0)))
+        J_AB = self.d_AB / 4 * (np.exp(-2*self.alpha*(r_AB - self.r0))
+                                - 6*np.exp(-self.alpha*(r_AB - self.r0)))
+        J_BC = self.d_BC / 4 * (np.exp(-2*self.alpha*(r_BC - self.r0))
+                                - 6*np.exp(-self.alpha*(r_BC - self.r0)))
+        J_AC = self.d_AC / 4 * (np.exp(-2*self.alpha*(r_AC - self.r0))
+                                - 6*np.exp(-self.alpha*(r_AC - self.r0)))
+        return (Q_AB / (1 + self.a) + Q_BC / (1 + self.b) + Q_AC / (1 + self.c)
+                - np.sqrt(J_AB**2 / (1 + self.a)**2 + J_BC**2 / (1 + self.b)**2
+                          + J_AC**2 / (1 + self.c)**2
+                          - (J_AB * J_BC) / ((1 + self.a)*(1 + self.b))
+                          - (J_BC * J_AC) / ((1 + self.b)*(1 + self.c))
+                          - (J_AB * J_AC) / ((1 + self.a)*(1 + self.c)))
+                )
+
+    def gradient(self, x, y):
+        raise NotImplementedError()
+        dx1 = 0.
+        dx2 = 0.
+        return dx1, dx2
+
+
 class ThreeDCalculator(Calculator):
     """Base class for three dimensional benchmark systems."""
 
