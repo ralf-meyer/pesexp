@@ -182,6 +182,10 @@ class AdamsSurface(TwoDCalculator):
 
 
 class MuellerBrownSurface(TwoDCalculator):
+    min_A = (-0.55822363,  1.44172584)
+    min_B = (-0.05001083,  0.4666941)
+    min_C = (0.6234994,  0.02803776)
+
     A = np.array([-200, -100, -170, 15])
     a = np.array([-1, -1, -6.5, 0.7])
     b = np.array([0, 0, 11, 0.6])
