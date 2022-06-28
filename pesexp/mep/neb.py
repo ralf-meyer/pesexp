@@ -145,6 +145,20 @@ class ImprovedTangentMethod(NEBMethod):
         imgforce += (spring2.nt * spring2.k - spring1.nt * spring1.k) * tangent
 
 
+class EnergySpringMethod(ImprovedTangentMethod):
+    mu = 1e-3
+
+    def add_image_force(self, state, tangential_force, tangent, imgforce,
+                        spring1, spring2, i):
+        imgforce -= tangential_force * tangent
+        energies = state.energies
+        spring_force_1 = (self.mu * abs(energies[i - 1] - energies[i])
+                          + spring1.nt * spring1.k)
+        spring_force_2 = (self.mu * abs(energies[i + 1] - energies[i])
+                          + spring2.nt * spring2.k)
+        imgforce += (spring_force_2 - spring_force_1) * tangent
+
+
 class ASENEBMethod(NEBMethod):
     """
     Standard NEB implementation in ASE. The tangent of each image is
@@ -190,9 +204,10 @@ class FullSpringMethod(NEBMethod):
         energies = state.energies
         # Spring forces
         # Eqs. C1, C5, C6 and C7 in paper III)
-        f1 = -(spring1.nt -
-               state.eqlength) * spring1.t / spring1.nt * spring1.k
-        f2 = (spring2.nt - state.eqlength) * spring2.t / spring2.nt * spring2.k
+        f1 = -(spring1.nt
+               - state.eqlength) * spring1.t / spring1.nt * spring1.k
+        f2 = (spring2.nt
+              - state.eqlength) * spring2.t / spring2.nt * spring2.k
         if self.neb.climb and abs(i - self.neb.imax) == 1:
             deltavmax = max(abs(energies[i + 1] - energies[i]),
                             abs(energies[i - 1] - energies[i]))
@@ -257,6 +272,8 @@ def get_neb_method(neb, method):
         return ASENEBMethod(neb)
     elif method == 'improvedtangent':
         return ImprovedTangentMethod(neb)
+    elif method == 'energyspring':
+        return EnergySpringMethod(neb)
     elif method == 'spline':
         return SplineMethod(neb)
     elif method == 'string':
@@ -297,7 +314,7 @@ class BaseNEB:
 
         self.remove_rotation_and_translation = remove_rotation_and_translation
 
-        if method in ['aseneb', 'eb', 'improvedtangent', 'spline', 'string']:
+        if method in ['aseneb', 'eb', 'improvedtangent', 'energyspring', 'spline', 'string']:
             self.method = method
         else:
             raise NotImplementedError(method)
