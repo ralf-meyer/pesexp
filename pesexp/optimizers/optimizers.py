@@ -3,11 +3,14 @@ import numpy as np
 import ase.optimize
 import ase.units
 from pesexp.geometry.coordinate_systems import CartesianCoordinates
-from pesexp.hessians.hessian_approximations import (BFGSHessian,
+from pesexp.hessians.hessian_approximations import (HessianApproximation,
+                                                    BFGSHessian,
                                                     BofillHessian)
 
 
 class InternalCoordinatesOptimizer(ase.optimize.optimize.Optimizer):
+    # Use abstract base class as placeholder here
+    hessian_approx = HessianApproximation
     defaults = {**ase.optimize.optimize.Optimizer.defaults,
                 'maxstep_internal': 1.0, 'H0': 70.0}
 
@@ -81,11 +84,6 @@ class InternalCoordinatesOptimizer(ase.optimize.optimize.Optimizer):
     @abstractmethod
     def internal_step(self, f):
         """this needs to be implemented by subclasses"""
-
-    @property
-    @abstractmethod
-    def hessian_approx(self):
-        """subclasses need to define a hessian approximation"""
 
     def read(self):
         (self.coord_set, self.H, self.r0, self.f0, self.e0, self.maxstep,
