@@ -170,15 +170,14 @@ class DelocalizedCoordinates(InternalCoordinates):
         w, v = np.linalg.eigh(G)
         # Set of nonredundant eigenvectors (eigenvalue =/= 0)
         self.U = v[:, np.abs(w) > self.threshold].copy()
-        if self.size() != xyzs.size - 6:
-            if check_colinear(xyzs):
-                if self.size() != xyzs.size - 5:
-                    warn(f'DelocalizedCoordinates found {self.size()} '
-                         f'coordinates, expected 3N - 5 = {xyzs.size - 5} '
-                         '(Linear molecule).')
-            else:
-                warn(f'DelocalizedCoordinates found {self.size()} coordinates,'
-                     f' expected 3N - 6 = {xyzs.size - 6}')
+        if check_colinear(xyzs):
+            if self.size() != xyzs.size - 5:
+                warn(f'DelocalizedCoordinates found {self.size()} '
+                     f'coordinates, expected 3N - 5 = {xyzs.size - 5} '
+                     '(Linear molecule).')
+        elif self.size() != xyzs.size - 6:
+            warn(f'DelocalizedCoordinates found {self.size()} coordinates,'
+                 f' expected 3N - 6 = {xyzs.size - 6}')
 
     def size(self):
         return self.U.shape[1]
@@ -207,15 +206,14 @@ class ApproximateNormalCoordinates(CoordinateSystem):
         inds = np.abs(vals) >= self.threshold
         self.V = V[:, inds].copy()
         self.x0 = atoms.get_positions()
-        if self.size() != self.x0.size - 6:
-            if check_colinear(self.x0):
-                if self.size() != self.x0.size - 5:
-                    warn(f'ApproximateNormalCoordinates found {self.size()} '
-                         f'coordinates, expected 3N - 5 = {self.x0.size - 5} '
-                         '(Linear molecule).')
-            else:
-                warn(f'ApproximateNormalCoordinates found {self.size()} coordinates,'
-                     f' expected 3N - 6 = {self.x0.size - 6}')
+        if check_colinear(self.x0):
+            if self.size() != self.x0.size - 5:
+                warn(f'ApproximateNormalCoordinates found {self.size()} '
+                     f'coordinates, expected 3N - 5 = {self.x0.size - 5} '
+                     '(Linear molecule).')
+        elif self.size() != self.x0.size - 6:
+            warn(f'ApproximateNormalCoordinates found {self.size()} '
+                 f'coordinates, expected 3N - 6 = {self.x0.size - 6}')
 
     def size(self):
         return self.V.shape[1]
