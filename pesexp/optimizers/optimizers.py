@@ -8,7 +8,6 @@ from pesexp.hessians.hessian_approximations import (BFGSHessian,
 
 
 class InternalCoordinatesOptimizer(ase.optimize.optimize.Optimizer):
-    hessian_approx = None
     defaults = {**ase.optimize.optimize.Optimizer.defaults,
                 'maxstep_internal': 1.0, 'H0': 70.0}
 
@@ -82,6 +81,11 @@ class InternalCoordinatesOptimizer(ase.optimize.optimize.Optimizer):
     @abstractmethod
     def internal_step(self, f):
         """this needs to be implemented by subclasses"""
+
+    @property
+    @abstractmethod
+    def hessian_approx(self):
+        """subclasses need to define a hessian approximation"""
 
     def read(self):
         (self.coord_set, self.H, self.r0, self.f0, self.e0, self.maxstep,

@@ -18,5 +18,5 @@ def get_calculator(method):
         return OpenbabelFF(ff=method.upper())
 
 
-__all__ = [TeraChem, OpenbabelFF, CerjanMillerSurface, AdamsSurface,
-           MuellerBrownSurface]
+__all__ = ['TeraChem', 'OpenbabelFF', 'CerjanMillerSurface', 'AdamsSurface',
+           'MuellerBrownSurface']

@@ -130,10 +130,10 @@ class GPRCalculator(MLCalculator):
                               f'{opt_res.nit} iterations with value: '
                               f'{opt_res.fun} and parameters:',
                               np.exp(opt_res.x))
-                except np.linalg.LinAlgError as E:
+                except np.linalg.LinAlgError as e:
                     print('Cholesky factorization failed for parameters:',
                           self.kernel.theta)
-                    print(E)
+                    print(e)
 
             if len(value) == 0:
                 raise ValueError('No successful optimization')
@@ -152,10 +152,10 @@ class GPRCalculator(MLCalculator):
 
         self.L, self.alpha = self._cholesky(k_mat)
 
-        y = self.alpha.dot(pure_k_mat)
-        E = y[:self.n_samples] + self.intercept
-        F = -y[self.n_samples:]
         if self.verbose > 0:
+            y = self.alpha.dot(pure_k_mat)
+            E = y[:self.n_samples] + self.intercept
+            F = -y[self.n_samples:]
             print('Fit finished. Final RMSE energy = %f, RMSE force = %f.' % (
                 np.sqrt(np.mean((E - self.E_train)**2)),
                 np.sqrt(np.mean((F - self.F_train)**2))))

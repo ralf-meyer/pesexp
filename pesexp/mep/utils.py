@@ -29,7 +29,7 @@ def pRFO_guess_from_neb(images: List[ase.atoms.Atoms], guess_hessian: str = 'fis
     # Normalize
     tau = tau.flatten()/np.linalg.norm(tau)
     # Find highest overlap
-    ind = np.argmax(np.dot(tau, vecs))
+    ind = int(np.argmax(np.dot(tau, vecs)))
 
     V = np.concatenate([tau[np.newaxis, :],
                         vecs[:, :ind].T,
