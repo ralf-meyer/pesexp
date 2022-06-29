@@ -205,11 +205,17 @@ class ApproximateNormalCoordinates(CoordinateSystem):
             H = LindhHessian(h_trans=0., h_rot=0.).build(atoms)
         vals, V = np.linalg.eigh(H)
         inds = np.abs(vals) >= self.threshold
-        if np.sum(inds) < (3*len(atoms) - 6):
-            warn(f'Warning: {np.sum(inds)} coordinates might be insufficient'
-                 f' for {len(atoms)} atoms.')
         self.V = V[:, inds].copy()
         self.x0 = atoms.get_positions()
+        if self.size() != self.x0.size - 6:
+            if check_colinear(self.x0):
+                if self.size() != self.x0.size - 5:
+                    warn(f'ApproximateNormalCoordinates found {self.size()} '
+                         f'coordinates, expected 3N - 5 = {self.x0.size - 5} '
+                         '(Linear molecule).')
+            else:
+                warn(f'ApproximateNormalCoordinates found {self.size()} coordinates,'
+                     f' expected 3N - 6 = {self.x0.size - 6}')
 
     def size(self):
         return self.V.shape[1]
