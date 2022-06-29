@@ -17,7 +17,7 @@ def test_co_potential_curve():
         image = Atoms(
             ['C', 'O'],
             positions=np.array([-0.5*ri*direction, 0.5*ri*direction]))
-        image.set_calculator(EMT())
+        image.calc = EMT()
         energies_train.append(image.get_potential_energy())
         images_train.append(image)
 
@@ -41,7 +41,7 @@ def test_prediction_variance():
         image = Atoms(
             ['C', 'O'],
             positions=np.array([-0.5*ri*direction, 0.5*ri*direction]))
-        image.set_calculator(EMT())
+        image.calc = EMT()
         images_train.append(image)
 
     r_test = np.linspace(0.5, 1.9, 101)
@@ -50,7 +50,7 @@ def test_prediction_variance():
         image = Atoms(
             ['C', 'O'],
             positions=np.array([-0.5*ri*direction, 0.5*ri*direction]))
-        image.set_calculator(EMT())
+        image.calc = EMT()
         images_test.append(image)
 
     kernel = RBFKernel(constant=100., length_scale=.1)
@@ -69,7 +69,7 @@ def test_log_marginal_likelihood_derivative():
     theta0 = np.exp(kernel.theta)
     calc = GPRCalculator(kernel=kernel, C1=1e8, C2=1e8, opt_restarts=0)
     atoms = molecule('C2H6')
-    atoms.set_calculator(EMT())
+    atoms.calc = EMT()
 
     calc.add_data(atoms)
     calc.fit()
@@ -96,7 +96,7 @@ def test_log_predictive_probability_derivative():
     theta0 = np.exp(kernel.theta)
     calc = GPRCalculator(kernel=kernel, C1=1e8, C2=1e8, opt_restarts=0)
     atoms = molecule('C2H6')
-    atoms.set_calculator(EMT())
+    atoms.calc = EMT()
 
     calc.add_data(atoms)
     calc.fit()

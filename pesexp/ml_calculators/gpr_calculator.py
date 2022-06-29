@@ -6,12 +6,12 @@ from scipy.optimize import minimize
 
 class GPRCalculator(MLCalculator):
 
-    def __init__(self, restart=None, ignore_bad_restart_file=False,
-                 label=None, atoms=None, kernel=None, verbose=0,
-                 opt_fun='marginal_likelihood', opt_method='L-BFGS-B',
-                 opt_restarts=0, normalize_y=False, mean_model=None, **kwargs):
-        MLCalculator.__init__(self, restart, ignore_bad_restart_file, label,
-                              atoms, **kwargs)
+    def __init__(self, restart=None, label=None, atoms=None, kernel=None,
+                 verbose=0, opt_fun='marginal_likelihood',
+                 opt_method='L-BFGS-B', opt_restarts=0, normalize_y=False,
+                 mean_model=None, **kwargs):
+        MLCalculator.__init__(self, restart=restart, label=label,
+                              atoms=atoms, **kwargs)
 
         self.kernel = kernel
         self.verbose = verbose
