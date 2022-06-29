@@ -1,7 +1,7 @@
 import numpy as np
 import ase.atoms
 from ase.build import minimize_rotation_and_translation
-from pesexp.hessians.hessian_guesses import compute_hessian_guess
+from pesexp.hessians.hessian_guesses import get_hessian_guess
 from pesexp.geometry.utils import gram_schmidt
 from typing import List
 
@@ -12,7 +12,7 @@ def pRFO_guess_from_neb(images: List[ase.atoms.Atoms], guess_hessian: str = 'fis
     neighbor1 = images[imax - 1]
     neighbor2 = images[imax + 1]
 
-    H = compute_hessian_guess(atoms, guess_hessian)
+    H = get_hessian_guess(atoms, guess_hessian)
     vals, vecs = np.linalg.eigh(H)
     # Approximiate curvature along NEB using finite differences
     h1 = np.linalg.norm(neighbor1.get_positions() - atoms.get_positions())

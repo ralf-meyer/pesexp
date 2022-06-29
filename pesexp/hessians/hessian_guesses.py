@@ -18,7 +18,7 @@ from pesexp.geometry.primitives import (Distance, Angle, LinearAngle,
 logger = logging.getLogger(__name__)
 
 
-def compute_hessian_guess(atoms, method):
+def get_hessian_guess(atoms, method):
     if method.lower() in _xtb_methods:
         return xtb_hessian(atoms, method)
     elif method.lower() in _openbabel_methods:
