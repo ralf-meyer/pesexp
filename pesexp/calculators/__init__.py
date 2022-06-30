@@ -1,5 +1,5 @@
 from .calculators import (TeraChem, OpenbabelFF, CerjanMillerSurface,
-                          AdamsSurface, MuellerBrownSurface)
+                          AdamsSurface, MuellerBrownSurface, LEPSPotential)
 
 _xtb_methods = ['xtb']
 _openbabel_methods = ['uff', 'mmff94', 'gaff']
@@ -19,4 +19,4 @@ def get_calculator(method):
 
 
 __all__ = ['TeraChem', 'OpenbabelFF', 'CerjanMillerSurface', 'AdamsSurface',
-           'MuellerBrownSurface']
+           'MuellerBrownSurface', 'LEPSPotential']

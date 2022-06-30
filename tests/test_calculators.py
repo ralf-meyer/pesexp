@@ -4,6 +4,7 @@ import ase.units
 from pesexp.calculators import (CerjanMillerSurface,
                                 AdamsSurface,
                                 MuellerBrownSurface,
+                                LEPSPotential,
                                 TeraChem)
 
 
@@ -73,6 +74,26 @@ def test_mueller_brown_surface():
 
     # Test transition state at approximately (0.2125, 0.2930)
     atoms.set_positions([[0.2125, 0.2930, 0.]])
+    f = atoms.get_forces()
+    np.testing.assert_allclose(f, np.zeros_like(f), atol=1e-2)
+
+
+def test_LEPSPotential():
+    atoms = ase.atoms.Atoms(positions=[[0., 0., 0.]])
+    atoms.calc = LEPSPotential()
+
+    # Test that the two endpoints used in the reference are close
+    # to minima (Note not actual minima):
+    atoms.set_positions([[0.742, 4., 0.]])
+    f = atoms.get_forces()
+    np.testing.assert_allclose(f, np.zeros_like(f), atol=1e-2)
+
+    atoms.set_positions([[4., 0.742, 0.]])
+    f = atoms.get_forces()
+    np.testing.assert_allclose(f, np.zeros_like(f), atol=1e-2)
+
+    # Test approximate transition state
+    atoms.set_positions([[1.15, 0.862, 0.]])
     f = atoms.get_forces()
     np.testing.assert_allclose(f, np.zeros_like(f), atol=1e-2)
 
