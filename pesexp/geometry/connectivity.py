@@ -1,8 +1,7 @@
 import numpy as np
 import ase.data
 import itertools
-from pesexp.geometry.primitives import (Distance, Angle, LinearAngle,
-                                        Dihedral, Improper)
+from pesexp.geometry.primitives import Distance, Angle, LinearAngle, Dihedral, Improper
 
 
 def find_connectivity(atoms, threshold=1.25, connect_fragments=True):
@@ -23,14 +22,20 @@ def find_connectivity(atoms, threshold=1.25, connect_fragments=True):
     neighbors_per_atom = [[] for _ in range(N)]
 
     for i in range(N):
-        for j in range(i+1, N):
-            r2[i, j] = r2[j, i] = np.sum((xyzs[i, :] - xyzs[j, :])**2)
+        for j in range(i + 1, N):
+            r2[i, j] = r2[j, i] = np.sum((xyzs[i, :] - xyzs[j, :]) ** 2)
             # "A connection is made whenever the square of the interatomic
             # distance is less than 1.25 times the square of the sum of the
             # corresponding covalent atomic radii."
-            if (r2[i, j] < threshold * (
+            if (
+                r2[i, j]
+                < threshold
+                * (
                     ase.data.covalent_radii[types[i]]
-                    + ase.data.covalent_radii[types[j]])**2):
+                    + ase.data.covalent_radii[types[j]]
+                )
+                ** 2
+            ):
                 bonds.append((i, j))
                 neighbors_per_atom[i].append(j)
                 neighbors_per_atom[j].append(i)
@@ -77,7 +82,7 @@ def cos_angle(r1, r2):
     Helper function that calculates the cosine of the angle between
     two vectors
     """
-    return np.dot(r1, r2)/(np.linalg.norm(r1)*np.linalg.norm(r2))
+    return np.dot(r1, r2) / (np.linalg.norm(r1) * np.linalg.norm(r2))
 
 
 def find_planars_billeter(a, neighbors, xyzs, planar_threshold):
@@ -100,9 +105,11 @@ def find_planars_billeter(a, neighbors, xyzs, planar_threshold):
         # Not sure if actually all three possible values need to be
         # checked. For an actual planar case the angles are dependent
         # since they add to 360 degrees.
-        if (np.abs(n1.dot(n2)) > planar_threshold
-                or np.abs(n2.dot(n3)) > planar_threshold
-                or np.abs(n3.dot(n1)) > planar_threshold):
+        if (
+            np.abs(n1.dot(n2)) > planar_threshold
+            or np.abs(n2.dot(n3)) > planar_threshold
+            or np.abs(n3.dot(n1)) > planar_threshold
+        ):
             # Try to find an improper (b, a, c, d)
             # such neither the angle t1 between (b, a, c)
             # nor t2 between (a, c, d) is close to linear
@@ -122,7 +129,7 @@ def find_planars_billeter(a, neighbors, xyzs, planar_threshold):
 
 
 def find_planars_molsimplify(a, neighbors, xyzs, planar_threshold):
-    max_area = 0.
+    max_area = 0.0
     for (ai, aj, ak) in itertools.combinations(neighbors[a], 3):
         r_ai = xyzs[ai, :] - xyzs[a, :]
         r_aj = xyzs[aj, :] - xyzs[a, :]
@@ -136,9 +143,11 @@ def find_planars_molsimplify(a, neighbors, xyzs, planar_threshold):
         n3 = np.cross(r_ak, r_ai)
         if np.sum(n3**2) > 0:  # Linear cases lead to division by zero
             n3 /= np.linalg.norm(n3)
-        if not (np.abs(n1.dot(n2)) > planar_threshold
-                or np.abs(n2.dot(n3)) > planar_threshold
-                or np.abs(n3.dot(n1)) > planar_threshold):
+        if not (
+            np.abs(n1.dot(n2)) > planar_threshold
+            or np.abs(n2.dot(n3)) > planar_threshold
+            or np.abs(n3.dot(n1)) > planar_threshold
+        ):
             # If a structure is identified as non-planar return empty lists
             return [], []
 
@@ -146,9 +155,11 @@ def find_planars_molsimplify(a, neighbors, xyzs, planar_threshold):
         n_ai = r_ai / np.linalg.norm(r_ai)
         n_aj = r_aj / np.linalg.norm(r_aj)
         n_ak = r_ak / np.linalg.norm(r_ak)
-        area = 0.5 * (np.linalg.norm(np.cross(n_ai, n_aj))
-                      + np.linalg.norm(np.cross(n_aj, n_ak))
-                      + np.linalg.norm(np.cross(n_ak, n_ai)))
+        area = 0.5 * (
+            np.linalg.norm(np.cross(n_ai, n_aj))
+            + np.linalg.norm(np.cross(n_aj, n_ak))
+            + np.linalg.norm(np.cross(n_ak, n_ai))
+        )
         if area > max_area:
             max_area = area
             planar = (a, ai, aj, ak)
@@ -163,8 +174,14 @@ def find_planars_molsimplify(a, neighbors, xyzs, planar_threshold):
     return [bend], [planar]
 
 
-def find_primitives(xyzs, bonds, linear_flag=True, linear_threshold=5.,
-                    planar_threshold=0.95, planar_method='molsimplify'):
+def find_primitives(
+    xyzs,
+    bonds,
+    linear_flag=True,
+    linear_threshold=5.0,
+    planar_threshold=0.95,
+    planar_method="molsimplify",
+):
     """
     Finds primitive internals given a reference geometry and connectivity list.
     Follows the algorithm outlined in Section II A of
@@ -205,11 +222,11 @@ def find_primitives(xyzs, bonds, linear_flag=True, linear_threshold=5.,
     planars = []
     # Transform the threshold angle to cos(angle) to avoid repeated
     # error prone calls to arccos.
-    cos_lin_thresh = np.abs(np.cos(linear_threshold*np.pi/180.))
+    cos_lin_thresh = np.abs(np.cos(linear_threshold * np.pi / 180.0))
 
     for a in range(len(xyzs)):
         for i, ai in enumerate(neighbors[a]):
-            for aj in neighbors[a][i+1:]:
+            for aj in neighbors[a][i + 1 :]:
                 r_ai = xyzs[ai, :] - xyzs[a, :]
                 r_aj = xyzs[aj, :] - xyzs[a, :]
                 cos_theta = np.abs(cos_angle(r_ai, r_aj))
@@ -218,9 +235,12 @@ def find_primitives(xyzs, bonds, linear_flag=True, linear_threshold=5.,
                 if cos_theta <= cos_lin_thresh:
                     bends.append((ai, a, aj))
                     for ak in neighbors[ai]:
-                        if (ak != a and ak != aj
-                                and (aj, a, ai, ak) not in torsions
-                                and (ak, ai, a, aj) not in torsions):
+                        if (
+                            ak != a
+                            and ak != aj
+                            and (aj, a, ai, ak) not in torsions
+                            and (ak, ai, a, aj) not in torsions
+                        ):
                             # Check if (ak, ai, a) is linear
                             r_ik = xyzs[ak, :] - xyzs[ai, :]
                             cos_phi = cos_angle(r_ik, r_ai)
@@ -229,9 +249,12 @@ def find_primitives(xyzs, bonds, linear_flag=True, linear_threshold=5.,
                                 # for the central two atoms (here a < ai).
                                 torsions.append((aj, a, ai, ak))
                     for ak in neighbors[aj]:
-                        if (ak != a and ak != ai
-                                and (ak, aj, a, ai) not in torsions
-                                and (ai, a, aj, ak) not in torsions):
+                        if (
+                            ak != a
+                            and ak != ai
+                            and (ak, aj, a, ai) not in torsions
+                            and (ai, a, aj, ak) not in torsions
+                        ):
                             # Check if (a, aj, ak) is linear
                             r_jk = xyzs[ak, :] - xyzs[aj, :]
                             cos_phi = cos_angle(r_jk, r_aj)
@@ -265,8 +288,7 @@ def find_primitives(xyzs, bonds, linear_flag=True, linear_threshold=5.,
                                     # single neighbor q
                                     return p, [q]
                                 # Else: recursively call this function:
-                                return find_non_linear_neighbors(
-                                    p, q)
+                                return find_non_linear_neighbors(p, q)
                             # Return p as end of chain and all neighbors
                             # that are not p and where the angle (o, p, q)
                             # is not linear:
@@ -286,44 +308,61 @@ def find_primitives(xyzs, bonds, linear_flag=True, linear_threshold=5.,
                         q, neighbors_q = find_non_linear_neighbors(a, aj)
                         for o in neighbors_p:
                             for r in neighbors_q:
-                                if ((o, p, q, r) not in torsions
-                                        and (r, q, p, o) not in torsions):
+                                if (o, p, q, r) not in torsions and (
+                                    r,
+                                    q,
+                                    p,
+                                    o,
+                                ) not in torsions:
                                     torsions.append((o, p, q, r))
         # "If an atom is connected to more than two atoms" and the threshold
         # is small enough to be exceeded. TODO: Switch to an enum based
         # implementation of planar method
         if len(neighbors[a]) > 2 and planar_threshold < 1.0:
-            if planar_method.lower() == 'billeter':
+            if planar_method.lower() == "billeter":
                 bends_to_remove, planars_to_append = find_planars_billeter(
-                    a, neighbors, xyzs, planar_threshold)
-            elif planar_method.lower() == 'molsimplify':
+                    a, neighbors, xyzs, planar_threshold
+                )
+            elif planar_method.lower() == "molsimplify":
                 bends_to_remove, planars_to_append = find_planars_molsimplify(
-                    a, neighbors, xyzs, planar_threshold)
+                    a, neighbors, xyzs, planar_threshold
+                )
             else:
-                raise NotImplementedError(
-                    f'Unknown planar_method {planar_method}')
+                raise NotImplementedError(f"Unknown planar_method {planar_method}")
             for b in bends_to_remove:
                 bends.remove(b)
             planars.extend(planars_to_append)
     return bends, linear_bends, torsions, planars
 
 
-def get_primitives(atoms, threshold=1.25, connect_fragments=True,
-                   linear_flag=True, linear_threshold=5.,
-                   planar_threshold=0.95, planar_method='molsimplify'):
+def get_primitives(
+    atoms,
+    threshold=1.25,
+    connect_fragments=True,
+    linear_flag=True,
+    linear_threshold=5.0,
+    planar_threshold=0.95,
+    planar_method="molsimplify",
+):
 
-    bonds = find_connectivity(atoms, threshold=threshold,
-                              connect_fragments=connect_fragments)
+    bonds = find_connectivity(
+        atoms, threshold=threshold, connect_fragments=connect_fragments
+    )
     xyzs = atoms.get_positions()
     bends, linear_bends, torsions, planars = find_primitives(
-        xyzs, bonds, linear_flag=linear_flag,
-        linear_threshold=linear_threshold, planar_threshold=planar_threshold,
-        planar_method=planar_method)
+        xyzs,
+        bonds,
+        linear_flag=linear_flag,
+        linear_threshold=linear_threshold,
+        planar_threshold=planar_threshold,
+        planar_method=planar_method,
+    )
 
-    primitives = ([Distance(*b) for b in bonds]
-                  + [Angle(*a) for a in bends]
-                  + [LinearAngle(*a, axis=axis)
-                     for a in linear_bends for axis in (0, 1)]
-                  + [Dihedral(*d) for d in torsions]
-                  + [Improper(*p) for p in planars])
+    primitives = (
+        [Distance(*b) for b in bonds]
+        + [Angle(*a) for a in bends]
+        + [LinearAngle(*a, axis=axis) for a in linear_bends for axis in (0, 1)]
+        + [Dihedral(*d) for d in torsions]
+        + [Improper(*p) for p in planars]
+    )
     return primitives

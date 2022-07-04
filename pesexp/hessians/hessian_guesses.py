@@ -5,14 +5,13 @@ import logging
 import numpy as np
 import ase.io
 import ase.units
-from pesexp.calculators import (_xtb_methods,
-                                _openbabel_methods,
-                                get_calculator)
-from pesexp.geometry.connectivity import (find_connectivity,
-                                          find_primitives,
-                                          get_primitives)
-from pesexp.geometry.primitives import (Distance, Angle, LinearAngle,
-                                        Dihedral, Improper)
+from pesexp.calculators import _xtb_methods, _openbabel_methods, get_calculator
+from pesexp.geometry.connectivity import (
+    find_connectivity,
+    find_primitives,
+    get_primitives,
+)
+from pesexp.geometry.primitives import Distance, Angle, LinearAngle, Dihedral, Improper
 
 
 logger = logging.getLogger(__name__)
@@ -27,19 +26,19 @@ def get_hessian_guess(atoms, method):
         H = numerical_hessian(atoms)
         atoms.calc = old_calc
         return H
-    elif method.lower() == 'trivial':
+    elif method.lower() == "trivial":
         return TrivialGuessHessian().build(atoms)
-    elif method.lower() == 'schlegel':
+    elif method.lower() == "schlegel":
         return SchlegelHessian().build(atoms)
-    elif method.lower() == 'fischer_almloef':
+    elif method.lower() == "fischer_almloef":
         return FischerAlmloefHessian().build(atoms)
-    elif method.lower() == 'lindh':
+    elif method.lower() == "lindh":
         return LindhHessian().build(atoms)
     else:
-        raise NotImplementedError(f'Unknown hessian_guess {method}')
+        raise NotImplementedError(f"Unknown hessian_guess {method}")
 
 
-class TrivialGuessHessian():
+class TrivialGuessHessian:
     """Base class for guess Hessians constructed in internal coordinates. The force
     constants in this trivial implementation follow the suggestion in
     Baker et al., J. Chem. Phys. 105, 192 (1996)
@@ -77,10 +76,12 @@ class TrivialGuessHessian():
         N = len(atoms)
         zs = atoms.get_atomic_numbers()
         xyzs = atoms.get_positions()
-        bonds = find_connectivity(atoms, threshold=self.threshold**2,
-                                  connect_fragments=True)
-        primitives = get_primitives(atoms, threshold=self.threshold**2,
-                                    connect_fragments=True)
+        bonds = find_connectivity(
+            atoms, threshold=self.threshold**2, connect_fragments=True
+        )
+        primitives = get_primitives(
+            atoms, threshold=self.threshold**2, connect_fragments=True
+        )
 
         # Calculate the number of bonds on each atom for the torsion
         # coefficient in the Fischer Almloef Hessian.
@@ -90,30 +91,55 @@ class TrivialGuessHessian():
             N_bonds[b[1]] += 1
 
         # Initialize Hessian in Cartesian coordinates
-        H = np.zeros((3*N, 3*N))
+        H = np.zeros((3 * N, 3 * N))
 
         for prim in primitives:
             # Default for "unknown" primitives
             h_ii = 0.0
             if type(prim) is Distance:
-                h_ii = self.distance(xyzs[prim.i], xyzs[prim.j],
-                                     zs[prim.i], zs[prim.j])
+                h_ii = self.distance(xyzs[prim.i], xyzs[prim.j], zs[prim.i], zs[prim.j])
             elif type(prim) is Angle:
-                h_ii = self.angle(xyzs[prim.i], xyzs[prim.j], xyzs[prim.k],
-                                  zs[prim.i], zs[prim.j], zs[prim.k])
+                h_ii = self.angle(
+                    xyzs[prim.i],
+                    xyzs[prim.j],
+                    xyzs[prim.k],
+                    zs[prim.i],
+                    zs[prim.j],
+                    zs[prim.k],
+                )
             elif type(prim) is LinearAngle:
-                h_ii = self.linear_angle(xyzs[prim.i], xyzs[prim.j],
-                                         xyzs[prim.k], zs[prim.i],
-                                         zs[prim.j], zs[prim.k])
+                h_ii = self.linear_angle(
+                    xyzs[prim.i],
+                    xyzs[prim.j],
+                    xyzs[prim.k],
+                    zs[prim.i],
+                    zs[prim.j],
+                    zs[prim.k],
+                )
             elif type(prim) is Dihedral:
-                h_ii = self.dihedral(xyzs[prim.i], xyzs[prim.j], xyzs[prim.k],
-                                     xyzs[prim.l], zs[prim.i], zs[prim.j],
-                                     zs[prim.k], zs[prim.l],
-                                     N_bonds[prim.j], N_bonds[prim.k])
+                h_ii = self.dihedral(
+                    xyzs[prim.i],
+                    xyzs[prim.j],
+                    xyzs[prim.k],
+                    xyzs[prim.l],
+                    zs[prim.i],
+                    zs[prim.j],
+                    zs[prim.k],
+                    zs[prim.l],
+                    N_bonds[prim.j],
+                    N_bonds[prim.k],
+                )
             elif type(prim) is Improper:
-                h_ii = self.improper(xyzs[prim.i], xyzs[prim.j], xyzs[prim.k],
-                                     xyzs[prim.l], zs[prim.i], zs[prim.j],
-                                     zs[prim.k], zs[prim.l])
+                h_ii = self.improper(
+                    xyzs[prim.i],
+                    xyzs[prim.j],
+                    xyzs[prim.k],
+                    xyzs[prim.l],
+                    zs[prim.i],
+                    zs[prim.j],
+                    zs[prim.k],
+                    zs[prim.l],
+                )
             Bi = prim.derivative(xyzs)
             H += np.outer(Bi, h_ii * Bi)
 
@@ -146,8 +172,9 @@ class TrivialGuessHessian():
     def linear_angle(self, xyz_i, xyz_j, xyz_k, z_i, z_j, z_k):
         return self.angle(xyz_i, xyz_j, xyz_k, z_i, z_j, z_k)
 
-    def dihedral(self, xyz_i, xyz_j, xyz_k, xyz_l, z_i, z_j, z_k, z_l,
-                 bonds_j, bonds_k):
+    def dihedral(
+        self, xyz_i, xyz_j, xyz_k, xyz_l, z_i, z_j, z_k, z_l, bonds_j, bonds_k
+    ):
         return 0.1 * ase.units.Hartree
 
     def improper(self, xyz_i, xyz_j, xyz_k, xyz_l, z_i, z_j, z_k, z_l):
@@ -187,8 +214,12 @@ class SchlegelHessian(TrivialGuessHessian):
         r_cov = ase.data.covalent_radii[z_i] + ase.data.covalent_radii[z_j]
         if r < self.threshold * r_cov:
             B = self.get_B_str(z_i, z_j)
-            return (1.734 * ase.units.Hartree * ase.units.Bohr /
-                    (r - B*ase.units.Bohr)**3)
+            return (
+                1.734
+                * ase.units.Hartree
+                * ase.units.Bohr
+                / (r - B * ase.units.Bohr) ** 3
+            )
         else:
             # Not covalently bonded atoms (from fragment connection).
             # Following geomeTRIC those are assigned a fixed value:
@@ -201,8 +232,9 @@ class SchlegelHessian(TrivialGuessHessian):
         # "all three heavy atom bends"
         return 0.250 * ase.units.Hartree
 
-    def dihedral(self, xyz_i, xyz_j, xyz_k, xyz_l, z_i, z_j, z_k, z_l,
-                 bonds_j, bonds_k):
+    def dihedral(
+        self, xyz_i, xyz_j, xyz_k, xyz_l, z_i, z_j, z_k, z_l, bonds_j, bonds_k
+    ):
         r = np.linalg.norm(xyz_j - xyz_k)
         r_cov = ase.data.covalent_radii[z_j] + ase.data.covalent_radii[z_k]
         # Follows the implementation in Psi4: line 177 in
@@ -220,8 +252,9 @@ class SchlegelHessian(TrivialGuessHessian):
         r3 = xyz_l - xyz_i
         # Additional np.abs() since we do not know the orientation of r1
         # with respect to r2 x r3.
-        d = 1 - np.abs(np.dot(r1, np.cross(r2, r3)))/(
-            np.linalg.norm(r1)*np.linalg.norm(r2)*np.linalg.norm(r3))
+        d = 1 - np.abs(np.dot(r1, np.cross(r2, r3))) / (
+            np.linalg.norm(r1) * np.linalg.norm(r2) * np.linalg.norm(r3)
+        )
         return 0.045 * ase.units.Hartree * d**4
 
 
@@ -254,11 +287,13 @@ class FischerAlmloefHessian(TrivialGuessHessian):
         B = 0.11 * ase.units.Hartree
         C = 0.44 / ase.units.Bohr
         D = -0.42
-        return (A + B / (r_ab_cov * r_ac_cov / ase.units.Bohr**2)**D
-                * np.exp(-C * (r_ab + r_ac - r_ab_cov - r_ac_cov)))
+        return A + B / (r_ab_cov * r_ac_cov / ase.units.Bohr**2) ** D * np.exp(
+            -C * (r_ab + r_ac - r_ab_cov - r_ac_cov)
+        )
 
-    def dihedral(self, xyz_i, xyz_j, xyz_k, xyz_l, z_i, z_j, z_k, z_l,
-                 bonds_j, bonds_k):
+    def dihedral(
+        self, xyz_i, xyz_j, xyz_k, xyz_l, z_i, z_j, z_k, z_l, bonds_j, bonds_k
+    ):
         # "Torsion about the central bond between atoms a and b"
         r_ab = np.linalg.norm(xyz_j - xyz_k)
         r_ab_cov = ase.data.covalent_radii[z_j] + ase.data.covalent_radii[z_k]
@@ -270,8 +305,9 @@ class FischerAlmloefHessian(TrivialGuessHessian):
         C = 2.85 / ase.units.Bohr
         D = 0.57
         E = 4.0
-        return (A + B * L**D / (r_ab * r_ab_cov / ase.units.Bohr**2)**E
-                * np.exp(-C*(r_ab - r_ab_cov)))
+        return A + B * L**D / (r_ab * r_ab_cov / ase.units.Bohr**2) ** E * np.exp(
+            -C * (r_ab - r_ab_cov)
+        )
 
     def improper(self, xyz_i, xyz_j, xyz_k, xyz_l, z_i, z_j, z_k, z_l):
         # "Out-of-plane bend of atom x and the plane formed by atoms a, b,
@@ -290,13 +326,13 @@ class FischerAlmloefHessian(TrivialGuessHessian):
         C = 3.00 / ase.units.Bohr
         D = 4.0
         E = 0.8
-        return (A + B * (r_ab_cov * r_ac_cov / ase.units.Bohr**2)**E
-                * cos_phi**D * np.exp(-C * (r_ax - r_ax_cov)))
+        return A + B * (
+            r_ab_cov * r_ac_cov / ase.units.Bohr**2
+        ) ** E * cos_phi**D * np.exp(-C * (r_ax - r_ax_cov))
 
 
-class LindhHessian():
-
-    def __init__(self, threshold=1e-5, h_trans=0., h_rot=0.):
+class LindhHessian:
+    def __init__(self, threshold=1e-5, h_trans=0.0, h_rot=0.0):
         """
         Parameters
         ----------
@@ -335,22 +371,25 @@ class LindhHessian():
         bonds = []
         # All atoms are considered connected
         for i in range(N):
-            for j in range(i+1, N):
+            for j in range(i + 1, N):
                 r = np.linalg.norm(xyzs[i] - xyzs[j]) / ase.units.Bohr
                 alpha, r_ref = self.get_parameters(zs[i], zs[j])
                 rho[i, j] = rho[j, i] = np.exp(alpha * (r_ref**2 - r**2))
                 if rho[i, j] > self.threshold:
                     bonds.append((i, j))
 
-        bends, _, torsions, _ = find_primitives(xyzs, bonds, linear_flag=False,
-                                                planar_threshold=1.0)
+        bends, _, torsions, _ = find_primitives(
+            xyzs, bonds, linear_flag=False, planar_threshold=1.0
+        )
 
-        primitives = ([Distance(*b) for b in bonds]
-                      + [Angle(*a) for a in bends]
-                      + [Dihedral(*d) for d in torsions])
+        primitives = (
+            [Distance(*b) for b in bonds]
+            + [Angle(*a) for a in bends]
+            + [Dihedral(*d) for d in torsions]
+        )
 
         # Initialize Hessian in Cartesian coordinates
-        H = np.zeros((3*N, 3*N))
+        H = np.zeros((3 * N, 3 * N))
 
         k_r = 0.45 * ase.units.Hartree / ase.units.Bohr**2
         k_phi = 0.15 * ase.units.Hartree
@@ -363,8 +402,12 @@ class LindhHessian():
             elif type(prim) is Angle:
                 h_ii = k_phi * rho[prim.i, prim.j] * rho[prim.j, prim.k]
             elif type(prim) is Dihedral:
-                h_ii = (k_tau * rho[prim.i, prim.j]
-                        * rho[prim.j, prim.k] * rho[prim.k, prim.l])
+                h_ii = (
+                    k_tau
+                    * rho[prim.i, prim.j]
+                    * rho[prim.j, prim.k]
+                    * rho[prim.k, prim.l]
+                )
             Bi = prim.derivative(xyzs)
             H += np.outer(Bi, h_ii * Bi)
 
@@ -410,28 +453,33 @@ class LindhHessian():
 def xtb_hessian(atoms, method):
     with tempfile.TemporaryDirectory() as tmpdir:
         # Write .xyz file
-        ase.io.write(os.path.join(tmpdir, 'tmp.xyz'), atoms, plain=True)
-        with open(os.path.join(tmpdir, 'xtb.inp'), 'w') as fout:
-            fout.write('$symmetry\n')
-            fout.write('  maxat=0\n')
-            fout.write('$end\n')
-        os.path.join(tmpdir, 'tmp.xyz')
+        ase.io.write(os.path.join(tmpdir, "tmp.xyz"), atoms, plain=True)
+        with open(os.path.join(tmpdir, "xtb.inp"), "w") as fout:
+            fout.write("$symmetry\n")
+            fout.write("  maxat=0\n")
+            fout.write("$end\n")
+        os.path.join(tmpdir, "tmp.xyz")
         try:
             output = subprocess.run(
-                ['xtb', '--input', 'xtb.inp', '--hess', 'tmp.xyz'],
-                cwd=tmpdir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                ["xtb", "--input", "xtb.inp", "--hess", "tmp.xyz"],
+                cwd=tmpdir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
         except FileNotFoundError:
-            raise ChildProcessError('Could not find subprocess xtb. Ensure xtb'
-                                    ' is installed and properly configured.')
+            raise ChildProcessError(
+                "Could not find subprocess xtb. Ensure xtb"
+                " is installed and properly configured."
+            )
         if output.returncode != 0:
             print(output)
-            raise ChildProcessError('XTB calculation failed')
-        H = read_xtb_hessian(os.path.join(tmpdir, 'hessian'))
+            raise ChildProcessError("XTB calculation failed")
+        H = read_xtb_hessian(os.path.join(tmpdir, "hessian"))
     return H
 
 
 def read_xtb_hessian(file):
-    with open(file, 'r') as fin:
+    with open(file, "r") as fin:
         content = fin.read()
     values = np.array([float(f) for f in content.split()[1:]])
     N = int(np.sqrt(values.size))
@@ -441,7 +489,7 @@ def read_xtb_hessian(file):
 def numerical_hessian(atoms, step=1e-5, symmetrize=True):
     N = len(atoms)
     x0 = atoms.get_positions()
-    H = np.zeros((3*N, 3*N))
+    H = np.zeros((3 * N, 3 * N))
 
     for i in range(N):
         for c in range(3):
@@ -454,14 +502,14 @@ def numerical_hessian(atoms, step=1e-5, symmetrize=True):
             x[i, c] -= step
             atoms.set_positions(x)
             g_minus = -atoms.get_forces().flatten()
-            H[3*i + c, :] = (g_plus - g_minus)/(2*step)
+            H[3 * i + c, :] = (g_plus - g_minus) / (2 * step)
     atoms.set_positions(x0)
     if symmetrize:
-        return 0.5*(H + H.T)
+        return 0.5 * (H + H.T)
     return H
 
 
-def filter_hessian(H, thresh=1.e-4):
+def filter_hessian(H, thresh=1.0e-4):
     """GeomeTRIC resets calculations if Hessian eigenvalues below
     a threshold of 1e-5 are encountered. This method is used to
     construct a new Hessian matrix where all eigenvalues smaller
@@ -481,8 +529,8 @@ def filter_hessian(H, thresh=1.e-4):
         filtered Hessian
     """
     vals, vecs = np.linalg.eigh(H)
-    logger.debug(f'Hessian eigenvalues:\n{vals}')
-    logger.info(f'Filtering {np.sum(vals < thresh)} Hessian eigenvalues')
+    logger.debug(f"Hessian eigenvalues:\n{vals}")
+    logger.info(f"Filtering {np.sum(vals < thresh)} Hessian eigenvalues")
     vals[vals < thresh] = thresh
-    H = np.einsum('ji,i,ki->jk', vecs, vals, vecs)
+    H = np.einsum("ji,i,ki->jk", vecs, vals, vecs)
     return H

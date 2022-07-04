@@ -15,8 +15,9 @@ class GPROptimizer(InternalCoordinatesOptimizer):
         ml_atoms.calc = self.ml_calc
         opt = BFGS(ml_atoms, coordinate_set=self.coord_set)
         opt.run(0.01)
-        return self.coord_set.diff_internals(ml_atoms.get_positions(),
-                                             self.atoms.get_positions())
+        return self.coord_set.diff_internals(
+            ml_atoms.get_positions(), self.atoms.get_positions()
+        )
 
     def update(self, r, f, r0, f0):
         super().update(r, f, r0, f0)

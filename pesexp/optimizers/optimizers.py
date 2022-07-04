@@ -3,47 +3,63 @@ import numpy as np
 import ase.optimize
 import ase.units
 from pesexp.geometry.coordinate_systems import CartesianCoordinates
-from pesexp.hessians.hessian_approximations import (HessianApproximation,
-                                                    BFGSHessian,
-                                                    BofillHessian)
+from pesexp.hessians.hessian_approximations import (
+    HessianApproximation,
+    BFGSHessian,
+    BofillHessian,
+)
 
 
 class InternalCoordinatesOptimizer(ase.optimize.optimize.Optimizer):
     # Use abstract base class as placeholder here
     hessian_approx = HessianApproximation
-    defaults = {**ase.optimize.optimize.Optimizer.defaults,
-                'maxstep_internal': 1.0, 'H0': 70.0}
+    defaults = {
+        **ase.optimize.optimize.Optimizer.defaults,
+        "maxstep_internal": 1.0,
+        "H0": 70.0,
+    }
 
-    def __init__(self, atoms, coordinate_set=None, restart=None, logfile='-',
-                 trajectory=None, master=None, H0=None,
-                 maxstep=None, maxstep_internal=None):
+    def __init__(
+        self,
+        atoms,
+        coordinate_set=None,
+        restart=None,
+        logfile="-",
+        trajectory=None,
+        master=None,
+        H0=None,
+        maxstep=None,
+        maxstep_internal=None,
+    ):
 
         if coordinate_set is None:
             self.coord_set = CartesianCoordinates(atoms)
         else:
             self.coord_set = coordinate_set
         if H0 is None:
-            self.H0 = self.defaults['H0']
+            self.H0 = self.defaults["H0"]
         else:
             self.H0 = H0
 
         if maxstep is None:
-            self.maxstep = self.defaults['maxstep']
+            self.maxstep = self.defaults["maxstep"]
         else:
             self.maxstep = maxstep
         if maxstep_internal is None:
-            self.maxstep_internal = self.defaults['maxstep_internal']
+            self.maxstep_internal = self.defaults["maxstep_internal"]
         else:
             self.maxstep_internal = maxstep_internal
-        ase.optimize.optimize.Optimizer.__init__(self, atoms, restart, logfile,
-                                                 trajectory, master)
+        ase.optimize.optimize.Optimizer.__init__(
+            self, atoms, restart, logfile, trajectory, master
+        )
 
     def initialize(self):
         if np.size(self.H0) == 1:
             H0 = np.eye(self.coord_set.size()) * self.H0
         else:
             H0 = self.coord_set.hessian_to_internals(
-                self.atoms.get_positions(), self.H0)
+                self.atoms.get_positions(), self.H0
+            )
         self.H = self.hessian_approx(H0)
         self.r0 = None
         self.f0 = None
@@ -78,16 +94,32 @@ class InternalCoordinatesOptimizer(ase.optimize.optimize.Optimizer):
         self.r0 = r.copy()
         self.f0 = f.copy()
         self.e0 = e
-        self.dump((self.coord_set, self.H, self.r0, self.f0, self.e0,
-                   self.maxstep, self.maxstep_internal))
+        self.dump(
+            (
+                self.coord_set,
+                self.H,
+                self.r0,
+                self.f0,
+                self.e0,
+                self.maxstep,
+                self.maxstep_internal,
+            )
+        )
 
     @abstractmethod
     def internal_step(self, f):
         """this needs to be implemented by subclasses"""
 
     def read(self):
-        (self.coord_set, self.H, self.r0, self.f0, self.e0, self.maxstep,
-         self.maxstep_internal) = self.load()
+        (
+            self.coord_set,
+            self.H,
+            self.r0,
+            self.f0,
+            self.e0,
+            self.maxstep,
+            self.maxstep_internal,
+        ) = self.load()
 
     def update(self, r, f, r0, f0):
         if r0 is None or f0 is None:  # No update on the first iteration
@@ -111,8 +143,7 @@ class NewtonRaphson(InternalCoordinatesOptimizer):
         omega, V = np.linalg.eigh(self.H)
         # Only take step in the direction of non-zero eigenvalues
         non_zero = np.abs(omega) > 1e-6
-        return np.dot(V[:, non_zero],
-                      np.dot(f, V[:, non_zero]) / omega[non_zero])
+        return np.dot(V[:, non_zero], np.dot(f, V[:, non_zero]) / omega[non_zero])
 
 
 class BFGS(NewtonRaphson):
@@ -120,7 +151,6 @@ class BFGS(NewtonRaphson):
 
 
 class RFO(InternalCoordinatesOptimizer):
-
     def __init__(self, *args, mu=0, **kwargs):
         self.mu = mu
         if self.mu == 0:
@@ -131,7 +161,7 @@ class RFO(InternalCoordinatesOptimizer):
 
     def internal_step(self, f):
         # extended Hessian matrix
-        H_ext = np.block([[self.H, -f[:, np.newaxis]], [-f, 0.]])
+        H_ext = np.block([[self.H, -f[:, np.newaxis]], [-f, 0.0]])
 
         _, V = np.linalg.eigh(H_ext)
 
@@ -157,15 +187,21 @@ class PRFO(InternalCoordinatesOptimizer):
         # The coordinates mu are maximized.
         max_ind = np.zeros_like(omega, dtype=bool)
         max_ind[self.mu] = True
-        H_max = np.block([[np.diag(omega[max_ind]),
-                           -f_trans[max_ind, np.newaxis]],
-                          [-f_trans[max_ind], 0.]])
+        H_max = np.block(
+            [
+                [np.diag(omega[max_ind]), -f_trans[max_ind, np.newaxis]],
+                [-f_trans[max_ind], 0.0],
+            ]
+        )
         _, V_max = np.linalg.eigh(H_max)
         # The remaining coordinates that are minimized.
         min_ind = np.logical_not(max_ind)
-        H_min = np.block([[np.diag(omega[min_ind]),
-                           -f_trans[min_ind, np.newaxis]],
-                          [-f_trans[min_ind], 0.]])
+        H_min = np.block(
+            [
+                [np.diag(omega[min_ind]), -f_trans[min_ind, np.newaxis]],
+                [-f_trans[min_ind], 0.0],
+            ]
+        )
         _, V_min = np.linalg.eigh(H_min)
         # Calculate the step by combining the highest eigenvector
         # from the maximization subset
@@ -182,8 +218,8 @@ class LBFGS(ase.optimize.LBFGS):
     """
 
     def __init__(self, atoms, coordinate_set, maxstep_internal=1.0, **kwargs):
-        if kwargs.get('use_line_search', False):
-            raise NotImplementedError('Line search is not implemented yet.')
+        if kwargs.get("use_line_search", False):
+            raise NotImplementedError("Line search is not implemented yet.")
         ase.optimize.LBFGS.__init__(self, atoms, **kwargs)
         self.coord_set = coordinate_set
         self.maxstep_internal = maxstep_internal
@@ -247,8 +283,18 @@ class LBFGS(ase.optimize.LBFGS):
         self.function_calls += 1
         self.r0 = r
         self.f0 = -g
-        self.dump((self.iteration, self.s, self.y,
-                   self.rho, self.r0, self.f0, self.e0, self.task))
+        self.dump(
+            (
+                self.iteration,
+                self.s,
+                self.y,
+                self.rho,
+                self.r0,
+                self.f0,
+                self.e0,
+                self.task,
+            )
+        )
 
     def update(self, r, f, r0, f0):
         """Update everything that is kept in memory
@@ -273,4 +319,4 @@ class LBFGS(ase.optimize.LBFGS):
             self.rho.pop(0)
 
     def replay_trajectory(self, traj):
-        raise NotImplementedError('Trajectory replay is not yet supported!')
+        raise NotImplementedError("Trajectory replay is not yet supported!")

@@ -8,28 +8,27 @@ from pesexp.hessians.hessian_guesses import LindhHessian
 from warnings import warn
 
 
-def get_coordinate_system(atoms, name='cart', coord_kwargs={}):
-    if name.lower() in ['cartesian', 'cart']:
+def get_coordinate_system(atoms, name="cart", coord_kwargs={}):
+    if name.lower() in ["cartesian", "cart"]:
         return CartesianCoordinates(atoms, **coord_kwargs)
-    elif name.lower() == 'dlc':
+    elif name.lower() == "dlc":
         primitives = get_primitives(atoms)
-        return DelocalizedCoordinates(primitives, xyzs=atoms.get_positions(),
-                                      **coord_kwargs)
-    elif name.lower() == 'anc':
+        return DelocalizedCoordinates(
+            primitives, xyzs=atoms.get_positions(), **coord_kwargs
+        )
+    elif name.lower() == "anc":
         return ApproximateNormalCoordinates(atoms, **coord_kwargs)
     else:
-        raise NotImplementedError('Unknown coordinate system {name}')
+        raise NotImplementedError("Unknown coordinate system {name}")
 
 
-class CoordinateSystem():
-
+class CoordinateSystem:
     def size(self):
         """Return the number of internal coordinates. Needed for example to
         setup a correctly sized hessian matrix."""
 
     def to_internals(self, xyzs):
-        """Transform a given Cartesian geometry to the internal representation.
-        """
+        """Transform a given Cartesian geometry to the internal representation."""
 
     def to_cartesians(self, dq, xyzs_ref):
         """For a given step in internal coordinates find the new Cartesian
@@ -52,12 +51,11 @@ class CoordinateSystem():
 
 
 class CartesianCoordinates(CoordinateSystem):
-
     def __init__(self, atoms):
         self.n_atoms = len(atoms)
 
     def size(self):
-        return 3*self.n_atoms
+        return 3 * self.n_atoms
 
     def to_internals(self, xyzs):
         return xyzs.flatten()
@@ -73,7 +71,6 @@ class CartesianCoordinates(CoordinateSystem):
 
 
 class InternalCoordinates(CoordinateSystem):
-
     def __init__(self, primitives, save_failures=True):
         self.primitives = primitives
         self.save_failures = save_failures
@@ -101,8 +98,16 @@ class InternalCoordinates(CoordinateSystem):
             q[i] = prim.value(xyzs)
         return q
 
-    def to_cartesians(self, dq, xyzs_ref, tol_q=1e-10, tol_x=1e-10,
-                      maxstep=0.05, maxiter=50, recursion_depth=0):
+    def to_cartesians(
+        self,
+        dq,
+        xyzs_ref,
+        tol_q=1e-10,
+        tol_x=1e-10,
+        maxstep=0.05,
+        maxiter=50,
+        recursion_depth=0,
+    ):
         xyzs = xyzs_ref.copy()
         dq_start = dq.copy()
         step = np.infty * np.ones_like(xyzs)
@@ -120,20 +125,27 @@ class InternalCoordinates(CoordinateSystem):
             # Calculate the step for the next iteration
             dq -= step_q
         if recursion_depth >= 3:
-            save_file = 'not saved as requested.'
+            save_file = "not saved as requested."
             if self.save_failures:
-                save_file = f'transformation_failure_{time.time():.0f}.pickle'
-                with open(save_file, 'wb') as fout:
+                save_file = f"transformation_failure_{time.time():.0f}.pickle"
+                with open(save_file, "wb") as fout:
                     pickle.dump([self, dq_start, xyzs_ref], fout)
-            raise ConvergenceError('Transformation to Cartesians not converged'
-                                   f' within {maxiter} iterations, checkpoint'
-                                   f' file {save_file}')
+            raise ConvergenceError(
+                "Transformation to Cartesians not converged"
+                f" within {maxiter} iterations, checkpoint"
+                f" file {save_file}"
+            )
         # Else warn, reduce dq_step by half, and try again
-        warn('Reducing step in transformation to Cartesians')
-        return self.to_cartesians(dq_start/2, xyzs_ref, tol_q=tol_q,
-                                  tol_x=tol_x, maxstep=maxstep,
-                                  maxiter=maxiter,
-                                  recursion_depth=recursion_depth + 1)
+        warn("Reducing step in transformation to Cartesians")
+        return self.to_cartesians(
+            dq_start / 2,
+            xyzs_ref,
+            tol_q=tol_q,
+            tol_x=tol_x,
+            maxstep=maxstep,
+            maxiter=maxiter,
+            recursion_depth=recursion_depth + 1,
+        )
 
     def diff_internals(self, xyzs1, xyzs2):
         dq = np.zeros(len(self.primitives))
@@ -148,8 +160,9 @@ class InternalCoordinates(CoordinateSystem):
         Binv = self.Binv(xyzs)
 
         if grad_cart is not None:
-            raise NotImplementedError('Transformation including gradient term '
-                                      'is not implemented yet')
+            raise NotImplementedError(
+                "Transformation including gradient term " "is not implemented yet"
+            )
             # hess_cart -= Binv @ grad_cart @ self.second_derivatives(xyzs)
 
         hess_int = Binv @ hess_cart @ Binv.T
@@ -157,7 +170,6 @@ class InternalCoordinates(CoordinateSystem):
 
 
 class DelocalizedCoordinates(InternalCoordinates):
-
     def __init__(self, primitives, xyzs, threshold=1e-6):
         InternalCoordinates.__init__(self, primitives)
         self.threshold = threshold
@@ -172,12 +184,16 @@ class DelocalizedCoordinates(InternalCoordinates):
         self.U = v[:, np.abs(w) > self.threshold].copy()
         if check_colinear(xyzs):
             if self.size() != xyzs.size - 5:
-                warn(f'DelocalizedCoordinates found {self.size()} '
-                     f'coordinates, expected 3N - 5 = {xyzs.size - 5} '
-                     '(Linear molecule).')
+                warn(
+                    f"DelocalizedCoordinates found {self.size()} "
+                    f"coordinates, expected 3N - 5 = {xyzs.size - 5} "
+                    "(Linear molecule)."
+                )
         elif self.size() != xyzs.size - 6:
-            warn(f'DelocalizedCoordinates found {self.size()} coordinates,'
-                 f' expected 3N - 6 = {xyzs.size - 6}')
+            warn(
+                f"DelocalizedCoordinates found {self.size()} coordinates,"
+                f" expected 3N - 6 = {xyzs.size - 6}"
+            )
 
     def size(self):
         return self.U.shape[1]
@@ -189,31 +205,33 @@ class DelocalizedCoordinates(InternalCoordinates):
         return self.U.T @ InternalCoordinates.to_internals(self, xyzs)
 
     def diff_internals(self, xyzs1, xyzs2):
-        return self.U.T @ InternalCoordinates.diff_internals(self, xyzs1,
-                                                             xyzs2)
+        return self.U.T @ InternalCoordinates.diff_internals(self, xyzs1, xyzs2)
 
 
 class ApproximateNormalCoordinates(CoordinateSystem):
-
-    def __init__(self, atoms, H=None, threshold=0.):
+    def __init__(self, atoms, H=None, threshold=0.0):
         self.threshold = threshold
         self.build(atoms, H=H)
 
     def build(self, atoms, H=None):
         if H is None:
-            H = LindhHessian(h_trans=0., h_rot=0.).build(atoms)
+            H = LindhHessian(h_trans=0.0, h_rot=0.0).build(atoms)
         vals, V = np.linalg.eigh(H)
         inds = np.abs(vals) >= self.threshold
         self.V = V[:, inds].copy()
         self.x0 = atoms.get_positions()
         if check_colinear(self.x0):
             if self.size() != self.x0.size - 5:
-                warn(f'ApproximateNormalCoordinates found {self.size()} '
-                     f'coordinates, expected 3N - 5 = {self.x0.size - 5} '
-                     '(Linear molecule).')
+                warn(
+                    f"ApproximateNormalCoordinates found {self.size()} "
+                    f"coordinates, expected 3N - 5 = {self.x0.size - 5} "
+                    "(Linear molecule)."
+                )
         elif self.size() != self.x0.size - 6:
-            warn(f'ApproximateNormalCoordinates found {self.size()} '
-                 f'coordinates, expected 3N - 6 = {self.x0.size - 6}')
+            warn(
+                f"ApproximateNormalCoordinates found {self.size()} "
+                f"coordinates, expected 3N - 6 = {self.x0.size - 6}"
+            )
 
     def size(self):
         return self.V.shape[1]

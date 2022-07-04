@@ -1,3 +1,3 @@
 from .gpr_calculator import GPRCalculator
 
-__all__ = ['GPRCalculator']
+__all__ = ["GPRCalculator"]
