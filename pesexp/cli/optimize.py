@@ -1,7 +1,7 @@
 import sys
 import logging
 from pesexp.utils.io import read_terachem_input
-from pesexp.cmds.params import parse_opt_args
+from pesexp.cli.params import parse_opt_args
 from pesexp.geometry.coordinate_systems import get_coordinate_system
 from pesexp.hessians.hessian_guesses import get_hessian_guess, filter_hessian
 from pesexp.optimizers.optimizers import RFO
