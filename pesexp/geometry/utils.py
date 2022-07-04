@@ -2,6 +2,42 @@ import itertools
 import numpy as np
 
 
+class CubicHermiteSpline:
+    """Follows https://en.wikipedia.org/wiki/Cubic_Hermite_spline
+    First the 3N + 1 dimensional vectors p and m (3N spatial + energy) are
+    calculated."""
+
+    def __init__(self, images):
+        self.n_images = len(images)
+        self.n_atoms = len(images[0])
+        # Corresponds to p in the reference
+        self.points = np.zeros((self.n_images, 3 * self.n_atoms + 1))
+        # Corresponds to m in the reference
+        self.tangents = np.zeros((self.n_images, 3 * self.n_atoms + 1))
+
+        for i, img in enumerate(images):
+            self.points[i, :-1] = img.get_positions().flatten()
+            self.points[i, -1] = img.get_potential_energies()
+            if i == 0:
+                self.tangents[i, :-1] = (
+                    images[i + 1].get_positions().flatten()
+                    - images[i].get_positions().flatten()
+                )
+            elif i == self.n_images - 1:
+                self.tangents[i, :-1] = (
+                    images[i].get_positions().flatten()
+                    - images[i - 1].get_positions().flatten()
+                )
+            else:
+                self.tangents[i, :-1] = (
+                    images[i + 1].get_positions().flatten()
+                    - images[i - 1].get_positions().flatten()
+                )
+            self.tangents[i, -1] = np.dot(
+                img.get_forces().flatten(), self.tangents[i, :-1]
+            ) / np.linalg.norm(self.tangents[i, :-1])
+
+
 def gram_schmidt(V, norm=np.linalg.norm):
     """Implements Gram-Schmidt following
     https://en.wikipedia.org/wiki/Gram%E2%80%93Schmidt_process#Algorithm
@@ -32,7 +68,7 @@ def check_colinear(xyzs, threshold=1e-3):
         ab /= np.linalg.norm(ab)
         ac = c - a
         ac /= np.linalg.norm(ac)
-        area = np.linalg.norm(np.cross(ab, ac))/2
+        area = np.linalg.norm(np.cross(ab, ac)) / 2
         if area > threshold:
             return False
     return True
