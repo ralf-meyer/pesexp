@@ -6,6 +6,7 @@ from pesexp.geometry.coordinate_systems import get_coordinate_system
 from pesexp.hessians.hessian_guesses import get_hessian_guess, filter_hessian
 from pesexp.optimizers.optimizers import RFO
 from pesexp.optimizers.convergence import TerachemConvergence
+from pesexp.optimizers.linesearch import backtracking
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,8 @@ def run_optimization(
     name="molsimp",
 ):
 
-    # Build optimizer with terachem convergence criteria
+    # Build optimizer with backtracking and TerachemConvergence criteria
+    @backtracking
     class MolSimplifyOpt(TerachemConvergence, RFO):
         pass
 
