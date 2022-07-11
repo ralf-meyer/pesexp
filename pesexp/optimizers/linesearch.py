@@ -1,4 +1,7 @@
+import logging
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 def backtracking(opt, c1=1e-4):
@@ -32,6 +35,9 @@ def backtracking(opt, c1=1e-4):
                 # Save step
                 self.step_prev = self.atoms.get_positions() - self.xyz_prev
             else:  # Retake last step with smaller alpha
+                logger.info(
+                    f"Rejecting step {self.nsteps} - delta E = {e - self.e_prev:.6f}"
+                )
                 self.step_prev = 0.5 * self.step_prev
                 self.atoms.set_positions(self.xyz_prev + self.step_prev)
 

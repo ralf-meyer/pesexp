@@ -1,5 +1,8 @@
+import logging
 from abc import abstractmethod
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 class HessianApproximation(np.ndarray):
@@ -18,7 +21,7 @@ class HessianApproximation(np.ndarray):
 class BFGSHessian(HessianApproximation):
     def update(self, dx, dg):
         if np.dot(dx, dg) < 0:
-            print("Skipping BFGS update to conserve positive " "definiteness.")
+            logger.info("Skipping BFGS update to conserve positive definiteness.")
             return
         self += self.deltaH(dx, dg)
 
