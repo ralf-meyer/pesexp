@@ -7,14 +7,14 @@ from utils import get_MB_surface
 import numpy as np
 import matplotlib.pyplot as plt
 
-initial = Atoms(['H'], positions=[[*MuellerBrownSurface.min_A, 0]])
-final = Atoms(['H'], positions=[[*MuellerBrownSurface.min_C, 0]])
+initial = Atoms(["H"], positions=[[*MuellerBrownSurface.min_A, 0]])
+final = Atoms(["H"], positions=[[*MuellerBrownSurface.min_C, 0]])
 
 images = [initial] + [initial.copy() for _ in range(11)] + [final]
 for image in images:
     image.calc = MuellerBrownSurface()
 
-neb = NEB(images, k=1e-1, method='improvedtangent')
+neb = NEB(images, k=1e-1, method="improvedtangent")
 neb.interpolate()
 
 opt = LBFGS(neb, alpha=1e3)
@@ -28,8 +28,8 @@ surface = get_MB_surface(x, y)
 levels = np.linspace(surface.min(), 0.0, 31)
 
 fig, ax = plt.subplots(ncols=2)
-ax[0].contourf(x, y, surface, levels=levels, extend='max')
-ax[0].plot(xyzs[:, 0, 0], xyzs[:, 0, 1], 'o-k')
+ax[0].contourf(x, y, surface, levels=levels, extend="max")
+ax[0].plot(xyzs[:, 0, 0], xyzs[:, 0, 1], "o-k")
 
 NEBTools(images).plot_band(ax=ax[1])
 
