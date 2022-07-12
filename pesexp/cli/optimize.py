@@ -35,6 +35,18 @@ def run_optimization(
     opt = MolSimplifyOpt(
         atoms, coordinate_set=coord_set, H0=H0, trajectory=f"{name}_optim.traj"
     )
+    # First evaluation:
+    atoms.get_forces()
+    # Set scf guess to read for the following calculations:
+    if atoms.calc.parameters["method"].startswith("u"):
+        # Unrestricted calculation
+        atoms.calc.parameters["guess"] = (
+            f"{atoms.calc.parameters['scrdir']}/ca0 "
+            f"{atoms.calc.parameters['scrdir']}/cb0"
+        )
+    else:
+        atoms.calc.parameters["guess"] = f"{atoms.calc.parameters['scrdir']}/c0"
+
     opt.run(steps=steps)
 
 

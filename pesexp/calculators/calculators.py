@@ -23,6 +23,7 @@ class TeraChem(FileIOCalculator):
         "method": "blyp",
         "basis": "6-31g*",
         "charge": 0,
+        "scrdir": "./scr",
     }
 
     def __init__(
