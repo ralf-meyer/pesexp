@@ -4,4 +4,5 @@ coordinates h2.xyz
 charge 0
 method b3lyp
 run gradient
+scrdir ./scr
 end
