@@ -1,38 +1,41 @@
+import logging
 import numpy as np
 import ase.atoms
-from ase.build import minimize_rotation_and_translation
 from pesexp.hessians.hessian_guesses import get_hessian_guess
-from pesexp.geometry.utils import gram_schmidt
+from pesexp.geometry.utils import CubicHermiteSpline, gram_schmidt
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 
 def pRFO_guess_from_neb(
     images: List[ase.atoms.Atoms], guess_hessian: str = "fischer_almloef"
 ):
-    imax = np.argmax([im.get_potential_energy() for im in images])
-    atoms = images[imax]
-    neighbor1 = images[imax - 1]
-    neighbor2 = images[imax + 1]
+    spline = CubicHermiteSpline.from_images(images)
+    s = np.linspace(0, 1, 101)
+    interp = spline(s)
+    energies = interp[:, -1]
+    imax = np.argmax(energies)
+
+    atoms = images[0].copy()
+    atoms.set_positions(interp[imax, :-1].reshape(-1, 3))
 
     H = get_hessian_guess(atoms, guess_hessian)
     vals, vecs = np.linalg.eigh(H)
-    # Approximiate curvature along NEB using finite differences
-    h1 = np.linalg.norm(neighbor1.get_positions() - atoms.get_positions())
-    h2 = np.linalg.norm(neighbor2.get_positions() - atoms.get_positions())
-    e1 = neighbor1.get_potential_energy()
-    e2 = neighbor2.get_potential_energy()
-    curv = (
-        2
-        * (h1 * e2 + h2 * e1 - (h1 + h2) * atoms.get_potential_energy())
-        / (h1 * h2 * (h1 + h2))
-    )
+
+    # Calculate curvature
+    h1 = np.linalg.norm(interp[imax - 1, :-1] - interp[imax, :-1])
+    h2 = np.linalg.norm(interp[imax + 1, :-1] - interp[imax, :-1])
+    e0 = interp[imax, -1]
+    e1 = interp[imax - 1, -1]
+    e2 = interp[imax + 1, -1]
+    curv = 2 * (h1 * e2 + h2 * e1 - (h1 + h2) * e0) / (h1 * h2 * (h1 + h2))
+    logger.info(f"Curvature: {curv:.2f} eV/Ang^2")
     assert curv < 0.0
-    # Align the neighbors before calculating the tangent
-    minimize_rotation_and_translation(atoms, neighbor1)
-    minimize_rotation_and_translation(atoms, neighbor2)
-    tau = neighbor1.get_positions() - neighbor2.get_positions()
+
+    tau = interp[imax + 1, :-1] - interp[imax - 1, :-1]
     # Normalize
-    tau = tau.flatten() / np.linalg.norm(tau)
+    tau = tau / np.linalg.norm(tau)
     # Find highest overlap
     ind = int(np.argmax(np.dot(tau, vecs)))
 
