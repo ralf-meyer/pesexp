@@ -7,17 +7,25 @@ from pesexp.mep.utils import pRFO_guess_from_neb
 
 def test_pRFO_workflow(resource_path_root):
     images = ase.io.read(resource_path_root / "mep" / "Fe_(NH3)_5+N2O.traj", index=":")
-    atoms, H = pRFO_guess_from_neb(images)
+    imax = 4  # Highest image on this trajectory
+    atoms, H = pRFO_guess_from_neb(images, remove_translation_and_rotation=True)
+    # Assert that the guess for the transition state is close to the highest image
+    np.testing.assert_allclose(
+        atoms.get_positions(), images[imax].get_positions(), atol=1e-1
+    )
+    # Test the properties of the newly constructed Hessian
     vals, vecs = np.linalg.eigh(H)
     # Assert that there is only one negative eigenvalue (neglecting values
     # close to zero)
-    assert np.count_nonzero(vals < -1e-8) == 1
+    assert np.count_nonzero(vals < -1e-6) == 1
+    # Assert that the Hessian has 6 close to zero eigenvalues (translation and rotation)
+    assert np.count_nonzero(abs(vals) < 1e-6) == 6
     # Assert that the smallest eigenvalue corresponds to the bond breaking
-    # direction, i.e. it is approximately parallel to the tangent at image 4.
-    assert vals[0] < 15
-    tangent = (images[3].get_positions() - images[5].get_positions()).flatten()
-    tangent /= np.linalg.norm(tangent)
+    # direction, i.e. it is approximately parallel to the tangent at image imax.
+    tangent = images[imax - 1].get_positions() - images[imax + 1].get_positions()
+    tangent = tangent.flatten() / np.linalg.norm(tangent)
     assert np.abs(np.dot(vecs[:, 0], tangent)) > 0.95
+
     # Assert that the curvature is approximately correct:
     ts = images[4]
     neighbor1 = images[3]
@@ -45,7 +53,7 @@ def test_pRFO_curvature():
         )
         images.append(a)
 
-    atoms, H = pRFO_guess_from_neb(images)
+    atoms, H = pRFO_guess_from_neb(images, remove_translation_and_rotation=False)
 
     # Maximum should be at x = 0
     np.testing.assert_allclose(atoms.get_positions(), [[0.0, 0.0, 0.0]], atol=1e-4)
