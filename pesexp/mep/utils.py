@@ -51,9 +51,9 @@ def pRFO_guess_from_neb(
     # Calculate curvature from finite differences (with uneven grid spacing)
     h1 = np.linalg.norm((pos_1 - pos_0).flatten())
     h2 = np.linalg.norm((pos_2 - pos_0).flatten())
-    e0 = interp[imax, -1]
-    e1 = interp[imax - 1, -1]
-    e2 = interp[imax + 1, -1]
+    e0 = energies[imax]
+    e1 = energies[imax - 1]
+    e2 = energies[imax + 1]
     curv = 2 * (h1 * e2 + h2 * e1 - (h1 + h2) * e0) / (h1 * h2 * (h1 + h2))
     logger.info(f"Curvature: {curv:.2f} eV/Ang^2")
     assert curv < 0.0
