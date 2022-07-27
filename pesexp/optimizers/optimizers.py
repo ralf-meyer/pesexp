@@ -1,4 +1,5 @@
 from abc import abstractmethod
+import logging
 import numpy as np
 import ase.optimize
 import ase.units
@@ -8,6 +9,8 @@ from pesexp.hessians.hessian_approximations import (
     BFGSHessian,
     BofillHessian,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class InternalCoordinatesOptimizer(ase.optimize.optimize.Optimizer):
@@ -193,7 +196,7 @@ class PRFO(InternalCoordinatesOptimizer):
                 [-f_trans[max_ind], 0.0],
             ]
         )
-        _, V_max = np.linalg.eigh(H_max)
+        omega_max, V_max = np.linalg.eigh(H_max)
         # The remaining coordinates that are minimized.
         min_ind = np.logical_not(max_ind)
         H_min = np.block(
@@ -202,12 +205,14 @@ class PRFO(InternalCoordinatesOptimizer):
                 [-f_trans[min_ind], 0.0],
             ]
         )
-        _, V_min = np.linalg.eigh(H_min)
+        omega_min, V_min = np.linalg.eigh(H_min)
         # Calculate the step by combining the highest eigenvector
         # from the maximization subset
         step[max_ind] = V_max[:-1, -1] / V_max[-1, -1]
         # and the lowest eigenvector from the minimization subset
         step[min_ind] = V_min[:-1, 0] / V_min[-1, 0]
+
+        logger.debug(f"lambda_p = {omega_max[-1]}, lambda_n = {omega_min[0]}")
         # Tranform step back to original system
         return np.dot(V, step)
 
