@@ -48,11 +48,17 @@ class PsBHessian(HessianApproximation):
 
 
 class BofillHessian(HessianApproximation):
-    """Bofill, J. Comput. Chem., 15:1-11 (1994)"""
+    """Bofill, J. Comput. Chem., 15:1-11 (1994)
+    Note that the notation here is different to the reference.
+    The variable s corresponds to xi, dg to gamma, dx to delta, and
+    phi to (1 - phi) in the reference,"""
 
     def deltaH(self, dx, dg):
         s = dg - np.dot(self, dx)
-        phi = np.dot(s, dx) ** 2 / (np.dot(s, s) * np.dot(dx, dx))
-        return phi * MurtaghSargentHessian.deltaH(self, dx, dg) + (
-            1 - phi
-        ) * PsBHessian.deltaH(self, dx, dg)
+        phi = np.dot(s, dx) ** 2
+        if phi > 0.0:  # Check to avoid division by zero
+            phi = phi / (np.dot(s, s) * np.dot(dx, dx))
+            return phi * MurtaghSargentHessian.deltaH(self, dx, dg) + (
+                1 - phi
+            ) * PsBHessian.deltaH(self, dx, dg)
+        return PsBHessian.deltaH(self, dx, dg)
