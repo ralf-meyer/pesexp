@@ -134,6 +134,7 @@ class InternalCoordinatesOptimizer(ase.optimize.optimize.Optimizer):
             # Same configuration again (maybe a restart):
             return
 
+        logger.debug(f"Step {self.nsteps}: Updating the Hessian approximation.")
         dg = -(f - f0)
         self.H.update(dr, dg)
 
@@ -184,7 +185,7 @@ class PRFO(InternalCoordinatesOptimizer):
     def internal_step(self, f):
         step = np.zeros_like(f)
         omega, V = np.linalg.eigh(self.H)
-        # Tranform the force vector to the eigenbasis of the Hessian
+        # Transform the force vector to the eigenbasis of the Hessian
         f_trans = np.dot(f, V)
         # Partition into two subproblems.
         # The coordinates mu are maximized.
