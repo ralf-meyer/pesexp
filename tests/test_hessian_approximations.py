@@ -59,19 +59,21 @@ def test_perfect_update(hess):
     np.testing.assert_allclose(H, [[2.0, 0.0], [0.0, -2.0]])
 
 
-@pytest.mark.skip(
-    "Test fails because the prediction of the small eigenvalue worsens after the update"
-)
 def test_Bofill_Hessian():
-    # f(x, y, z) = x**2 - y**2
+    """This test was introduced to inspect why the Bofill update sometimes leads to
+    bad estimates of the Hessian eigenspectrum. Changing the initial value of the
+    z entry shows that this problem occurs when large steps are taken, thus
+    motivating a step size control algorithm."""
+    # f(x, y, z) = x**2 - y**2 + 0.001 * z**2
     # Initialize close to correct Hessian
-    H = BofillHessian([[1.95, 0.0, 0.0], [0.0, -1.98, 0.0], [0.0, 0.0, 1e-5]])
+    H = BofillHessian([[1.95, 0.0, 0.0], [0.0, -1.98, 0.0], [0.0, 0.0, 1.8e-3]])
     vals_prior = np.linalg.eigh(H)[0]
 
     x0 = np.array([1.0, 1.0, 1.0])
-    g0 = np.array([2 * x0[0], -2 * x0[1], 0.0])
-    x1 = np.array([0.0, 0.0, 0.0])
-    g1 = np.array([2 * x1[0], -2 * x1[1], 0.0])
+    g0 = np.array([2 * x0[0], -2 * x0[1], 0.002 * x0[2]])
+    # Quasi Newton step
+    x1 = x0 - np.linalg.inv(H).dot(g0)
+    g1 = np.array([2 * x1[0], -2 * x1[1], 0.002 * x1[2]])
     dx = x1 - x0
     dg = g1 - g0
 
