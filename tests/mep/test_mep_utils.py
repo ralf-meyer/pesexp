@@ -1,8 +1,13 @@
+import pytest
 import ase.io
 import ase.atoms
 from ase.calculators.singlepoint import SinglePointCalculator
+from ase.neb import NEB
 import numpy as np
 from pesexp.mep.utils import pRFO_guess_from_neb
+from pesexp.optimizers.optimizers import PRFO
+from pesexp.geometry.coordinate_systems import ApproximateNormalCoordinates
+from pesexp.geometry.primitives import Dihedral
 
 
 def test_pRFO_workflow(resource_path_root):
@@ -60,3 +65,31 @@ def test_pRFO_curvature():
     # Curvature of -x**2 should be -2
     vals, _ = np.linalg.eigh(H)
     assert abs(vals[0] - -2.0) < 1e-4
+
+
+def test_pRFO_workflow_ethane():
+    xtb_ase_calc = pytest.importorskip("xtb.ase.calculator")
+    initial = ase.build.molecule("C2H6")
+
+    final = initial.copy()
+    final.positions[2:5] = initial.positions[[3, 4, 2]]
+
+    # Generate blank images.
+    images = [initial] + [initial.copy() for _ in range(9)] + [final]
+    for im in images:
+        im.calc = xtb_ase_calc.XTB(method="GFN2-xTB")
+    neb = NEB(images)
+    neb.interpolate("idpp")
+
+    atoms, H = pRFO_guess_from_neb(images, remove_translation_and_rotation=True)
+    atoms.calc = xtb_ase_calc.XTB(method="GFN2-xTB")
+    coord_set = ApproximateNormalCoordinates(atoms, H=H, threshold=1e-8)
+
+    opt = PRFO(atoms, coordinate_set=coord_set, H0=H, maxstep=0.05)
+    opt.run(fmax=0.005, steps=100)
+
+    assert opt.converged()
+    # Assert that the two methly groups have aligned
+    assert abs(Dihedral(2, 0, 1, 6).value(atoms.get_positions())) < 1e-2
+    assert abs(Dihedral(3, 0, 1, 5).value(atoms.get_positions())) < 1e-2
+    assert abs(Dihedral(4, 0, 1, 7).value(atoms.get_positions())) < 1e-2
