@@ -74,7 +74,6 @@ def test_pRFO_workflow_ethane():
     final = initial.copy()
     final.positions[2:5] = initial.positions[[3, 4, 2]]
 
-    # Generate blank images.
     images = [initial] + [initial.copy() for _ in range(9)] + [final]
     for im in images:
         im.calc = xtb_ase_calc.XTB(method="GFN2-xTB")
