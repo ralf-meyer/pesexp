@@ -35,6 +35,25 @@ def test_banerjee_step_control():
     assert opt.converged()
 
 
+def test_banerjee_step_control_zero_mode():
+    class DummyCalc(ThreeDCalculator):
+        def energy(self, x, y, z):
+            return x**4 - y**2
+
+        def gradient(self, x, y, z):
+            return 4 * x**3, -2 * y, 0.0
+
+    atoms = ase.atoms.Atoms(positions=np.array([[1.0, 1.0, 1.0]]))
+    atoms.calc = DummyCalc()
+
+    # Starting from exact Hessian
+    H0 = np.array([[12.0, 0.0, 0.0], [0.0, -2.0, 0.0], [0.0, 0.0, 0.0]])
+    opt = banerjee_step_control(PRFO)(atoms, H0=H0, maxstep=0.1)
+    for _ in opt.irun(fmax=0.001, steps=100):
+        print(atoms.get_positions())
+    assert opt.converged()
+
+
 def test_banerjee_step_control_wrong_hessian():
     class DummyCalc(ThreeDCalculator):
         def energy(self, x, y, z):
