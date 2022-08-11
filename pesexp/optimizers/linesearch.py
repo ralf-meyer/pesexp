@@ -42,7 +42,7 @@ def backtracking(opt, c1=1e-4):
     return BacktrackingOptimizer
 
 
-def banerjee_step_control(opt, threshold=0.3, min_reduction=0.5):
+def banerjee_step_control(opt, threshold=0.3, min_reduction=0.9):
     class BanerjeeStepControlledOptimizer(opt):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -96,6 +96,7 @@ def banerjee_step_control(opt, threshold=0.3, min_reduction=0.5):
                     g = np.dot(-f_prev_internal, u)
                     h = np.dot(u, np.dot(self.H, u))
                     M = 6 * np.abs(actual_delta_e - model_delta_e) / norm_x**3
+                    logger.debug(f"Parameters: g = {g:.3f}, h = {h:.3f}, M = {M:.3f}")
                     t_vec = np.linspace(0, norm_x, 101)
                     inds = np.where(
                         M * t_vec**2 / 6
@@ -103,7 +104,7 @@ def banerjee_step_control(opt, threshold=0.3, min_reduction=0.5):
                     )
                     t = t_vec[inds[0][-1]]
                     # Ensure that there is always some reduction:
-                    t = min(t, self.min_reduction * norm_x)
+                    t = max(1e-4, min(t, self.min_reduction * norm_x))
                     logger.debug(
                         f"Rescaling last step by {t/norm_x:.3f}, "
                         f"new norm_x = {t:.4f} "

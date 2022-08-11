@@ -4,8 +4,6 @@ import numpy as np
 from pesexp.calculators.calculators import ThreeDCalculator
 from pesexp.optimizers import BFGS, PRFO
 from pesexp.optimizers.linesearch import backtracking, banerjee_step_control
-from pesexp.geometry.primitives import Cartesian
-from pesexp.geometry.coordinate_systems import InternalCoordinates
 
 
 def test_backtracking():
@@ -30,15 +28,9 @@ def test_banerjee_step_control():
 
     atoms = ase.atoms.Atoms(positions=np.array([[1.0, 1.0, 1.0]]))
     atoms.calc = DummyCalc()
-    coord_set = InternalCoordinates(
-        [Cartesian(0, axis=0), Cartesian(0, axis=1), Cartesian(0, axis=2)]
-    )
-
     # Starting from exact Hessian
     H0 = np.array([[12.0, 0.0, 0.0], [0.0, -2.0, 0.0], [0.0, 0.0, 0.002]])
-    opt = banerjee_step_control(PRFO)(
-        atoms, coordinate_set=coord_set, H0=H0, maxstep=0.05
-    )
+    opt = banerjee_step_control(PRFO)(atoms, H0=H0, maxstep=0.05)
     opt.run(fmax=0.001, steps=100)
     assert opt.converged()
 
@@ -46,21 +38,17 @@ def test_banerjee_step_control():
 def test_banerjee_step_control_wrong_hessian():
     class DummyCalc(ThreeDCalculator):
         def energy(self, x, y, z):
-            return x**4 - x**2 - y**2 + 0.001 * z**2
+            return 0.5 * x**4 - y**2 + 0.001 * z**2
 
         def gradient(self, x, y, z):
-            return 4 * x**3 - 2 * x, -2 * y, 0.002 * z
+            return 2 * x**3, -2 * y, 0.002 * z
 
     atoms = ase.atoms.Atoms(positions=np.array([[1.0, 1.0, 1.0]]))
     atoms.calc = DummyCalc()
-    coord_set = InternalCoordinates(
-        [Cartesian(0, axis=0), Cartesian(0, axis=1), Cartesian(0, axis=2)]
-    )
 
-    # Starting from purposefully wrong hessian
-    H0 = np.array([[2.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 0.002]])
-    opt = banerjee_step_control(PRFO)(
-        atoms, coordinate_set=coord_set, H0=H0, maxstep=10.0
-    )
-    opt.run(fmax=0.001, steps=100)
+    # Starting from purposefully wrong hessian (corresponding to a quadratic model)
+    H0 = np.array([[2.0, 0.0, 0.0], [0.0, -2.0, 0.0], [0.0, 0.0, 0.002]])
+    opt = banerjee_step_control(PRFO)(atoms, H0=H0, maxstep=10.0)
+    for _ in opt.irun(fmax=0.001, steps=100):
+        print(atoms.get_positions())
     assert opt.converged()
