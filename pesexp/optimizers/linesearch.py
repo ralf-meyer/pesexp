@@ -78,7 +78,7 @@ def banerjee_step_control(opt, threshold=0.3, min_reduction=0.5):
                 # error and not the actual error. Simply following Banerjee et al. here:
                 delta = np.abs(actual_delta_e - model_delta_e) / np.abs(model_delta_e)
                 logger.debug(
-                    f"Step: {self.nsteps}: delta E, "
+                    f"Step {self.nsteps}: delta E, "
                     f"actual {actual_delta_e:.5f}, "
                     f"model {model_delta_e:.5f} - "
                     f"relative error of delta E = {delta:.2f}"
