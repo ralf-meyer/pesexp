@@ -83,13 +83,15 @@ def banerjee_step_control(opt, threshold=0.3, min_reduction=0.5):
                     f"model {model_delta_e:.5f} - "
                     f"relative error of delta E = {delta:.2f}"
                 )
-                # Check relative error of model predicted energy change
-                if delta > self.threshold:  # Retake last step with smaller alpha
+                norm_x = np.linalg.norm(step_internal)
+                # If relative error of model predicted energy change exceeds the
+                # treshold (and the previous step was larger than 1e-4)
+                if delta > self.threshold and norm_x > 1e-4:
+                    # Retake last step with smaller step length
                     logger.info(
                         f"Rejecting step {self.nsteps} - "
                         f"relative error of delta E = {delta:.2f} > threshold"
                     )
-                    norm_x = np.linalg.norm(step_internal)
                     u = step_internal / norm_x
                     g = np.dot(-f_prev_internal, u)
                     h = np.dot(u, np.dot(self.H, u))
@@ -103,9 +105,9 @@ def banerjee_step_control(opt, threshold=0.3, min_reduction=0.5):
                     # Ensure that there is always some reduction:
                     t = min(t, self.min_reduction * norm_x)
                     logger.debug(
-                        f"Rescaling last step by {t/norm_x:.2f}, "
-                        f"new norm_x = {t:.2f} "
-                        f"original norm_x = {norm_x:.2f}"
+                        f"Rescaling last step by {t/norm_x:.3f}, "
+                        f"new norm_x = {t:.4f} "
+                        f"original norm_x = {norm_x:.4f}"
                     )
                     self.atoms.set_positions(
                         self.coord_set.to_cartesians(t * u, self.xyz_prev)
