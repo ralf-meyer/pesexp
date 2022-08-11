@@ -74,9 +74,9 @@ def banerjee_step_control(opt, threshold=0.3, min_reduction=0.5):
                         np.dot(self.H, step_internal),
                     )
                 ) / (1.0 + np.dot(step_internal, step_internal))
-                # Unsure why the relative error is calculated by dividing by the model
-                # error and not the actual error. Simply following Banerjee et al. here:
-                delta = np.abs(actual_delta_e - model_delta_e) / np.abs(model_delta_e)
+                # Note that this is different from Banerjee et al since we are dividing
+                # by the actual delta E.
+                delta = np.abs(actual_delta_e - model_delta_e) / np.abs(actual_delta_e)
                 logger.debug(
                     f"Step {self.nsteps}: delta E, "
                     f"actual {actual_delta_e:.5f}, "
