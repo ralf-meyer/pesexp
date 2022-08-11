@@ -161,7 +161,7 @@ class InternalCoordinates(CoordinateSystem):
 
         if grad_cart is not None:
             raise NotImplementedError(
-                "Transformation including gradient term " "is not implemented yet"
+                "Transformation including gradient term is not implemented yet"
             )
             # hess_cart -= Binv @ grad_cart @ self.second_derivatives(xyzs)
 
@@ -209,7 +209,7 @@ class DelocalizedCoordinates(InternalCoordinates):
 
 
 class ApproximateNormalCoordinates(CoordinateSystem):
-    def __init__(self, atoms, H=None, threshold=0.0):
+    def __init__(self, atoms, H=None, threshold=1e-6):
         self.threshold = threshold
         self.build(atoms, H=H)
 
@@ -218,7 +218,7 @@ class ApproximateNormalCoordinates(CoordinateSystem):
             H = LindhHessian(h_trans=0.0, h_rot=0.0).build(atoms)
         vals, V = np.linalg.eigh(H)
         inds = np.abs(vals) >= self.threshold
-        self.V = V[:, inds].copy()
+        self.V = np.transpose(V[:, inds]).copy()
         self.x0 = atoms.get_positions()
         if check_colinear(self.x0):
             if self.size() != self.x0.size - 5:
@@ -234,19 +234,19 @@ class ApproximateNormalCoordinates(CoordinateSystem):
             )
 
     def size(self):
-        return self.V.shape[1]
+        return self.V.shape[0]
 
     def to_internals(self, xyzs):
-        return (xyzs - self.x0).flatten() @ self.V
+        return self.V @ (xyzs - self.x0).flatten()
 
     def to_cartesians(self, dq, xyzs_ref):
-        return xyzs_ref + (self.V @ dq).reshape(xyzs_ref.shape)
+        return xyzs_ref + (dq @ self.V).reshape(xyzs_ref.shape)
 
     def diff_internals(self, xyzs1, xyzs2):
-        return (xyzs1 - xyzs2).flatten() @ self.V
+        return self.V @ (xyzs1 - xyzs2).flatten()
 
     def force_to_internals(self, xyzs, force_cart):
-        return force_cart @ self.V
+        return self.V @ force_cart.flatten()
 
     def hessian_to_internals(self, xyzs, hess_cart, grad_cart=None):
-        return self.V.T @ hess_cart @ self.V
+        return self.V @ hess_cart @ self.V.T
