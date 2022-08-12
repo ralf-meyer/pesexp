@@ -22,7 +22,7 @@ def run_optimization(
 
     # Build optimizer with backtracking and TerachemConvergence criteria
     @backtracking
-    class MolSimplifyOpt(TerachemConvergence, RFO):
+    class PesexpOpt(TerachemConvergence, RFO):
         pass
 
     coord_set = get_coordinate_system(atoms, coords)
@@ -32,7 +32,7 @@ def run_optimization(
         if hessian_thresh is not None:
             H0 = filter_hessian(H0, hessian_thresh)
 
-    opt = MolSimplifyOpt(
+    opt = PesexpOpt(
         atoms, coordinate_set=coord_set, H0=H0, trajectory=f"{name}_optim.traj"
     )
     # First evaluation:
