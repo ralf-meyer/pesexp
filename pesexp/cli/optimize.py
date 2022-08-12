@@ -17,7 +17,7 @@ def run_optimization(
     steps=300,
     hessian_guess="trivial",
     hessian_thresh=None,
-    name="molsimp",
+    name="pesexp",
 ):
 
     # Build optimizer with backtracking and TerachemConvergence criteria
