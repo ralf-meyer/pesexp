@@ -215,8 +215,8 @@ class PRFO(InternalCoordinatesOptimizer):
 
         logger.debug(
             "pRFO step: first 3 eigenvalues are "
-            f"{omega[0]:.2E} {omega[1]:.2E} {omega[2]:.2E}, "
-            f"lambda_p = {omega_max[-1]:.2E}, lambda_n = {omega_min[0]:.2E}"
+            f"{' '.join([f'{o:.3E}' for o in omega[:3]])}, "
+            f"lambda_p = {omega_max[-1]:.3E}, lambda_n = {omega_min[0]:.3E}"
         )
         # Tranform step back to original system
         return np.dot(V, step)
