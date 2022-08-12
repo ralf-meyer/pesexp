@@ -36,7 +36,7 @@ class MurtaghSargentHessian(HessianApproximation):
         return np.outer(s, s) / np.dot(s, dx)
 
 
-class PsBHessian(HessianApproximation):
+class PowellHessian(HessianApproximation):
     "Powell-symmetric-Broyden"
 
     def deltaH(self, dx, dg):
@@ -60,5 +60,5 @@ class BofillHessian(HessianApproximation):
             phi = phi / (np.dot(s, s) * np.dot(dx, dx))
             return phi * MurtaghSargentHessian.deltaH(self, dx, dg) + (
                 1 - phi
-            ) * PsBHessian.deltaH(self, dx, dg)
-        return PsBHessian.deltaH(self, dx, dg)
+            ) * PowellHessian.deltaH(self, dx, dg)
+        return PowellHessian.deltaH(self, dx, dg)

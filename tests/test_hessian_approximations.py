@@ -3,13 +3,13 @@ import numpy as np
 from pesexp.hessians.hessian_approximations import (
     BFGSHessian,
     MurtaghSargentHessian,
-    PsBHessian,
+    PowellHessian,
     BofillHessian,
 )
 
 
 @pytest.mark.parametrize(
-    "hess", [BFGSHessian, MurtaghSargentHessian, PsBHessian, BofillHessian]
+    "hess", [BFGSHessian, MurtaghSargentHessian, PowellHessian, BofillHessian]
 )
 def test_scaling_invariance(hess):
     """The updates should be invariant to various kinds of scaling."""
@@ -42,7 +42,7 @@ def test_scaling_invariance(hess):
     np.testing.assert_allclose(H, H_ref)
 
 
-@pytest.mark.parametrize("hess", [PsBHessian, BofillHessian])
+@pytest.mark.parametrize("hess", [PowellHessian, BofillHessian])
 def test_perfect_update(hess):
     # Test what happens if the "correct" Hessian is updated using exact values from a
     # quadratic function: f(x, y) = x**2 - y**2
