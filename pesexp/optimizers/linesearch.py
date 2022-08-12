@@ -23,20 +23,26 @@ def backtracking(opt, c1=1e-4):
             step_prev = self.atoms.get_positions() - self.xyz_prev
             # Check sufficient decrease condition:
             # Scaling parameter alpha and step direction p are combined in
-            # self.step_prev. The minus sign is due to the use of force instead
+            # step_prev. The minus sign is due to the use of force instead
             # of gradient. np.vdot is used to flattten the arrays f_prev and step_prev
-            if e < self.e_prev - self.c1 * np.vdot(self.f_prev, step_prev):
-                # Last step was accepted: save current values
-                self.e_prev = e
-                self.f_prev = f
-                self.xyz_prev = self.atoms.get_positions()
-                # Take unscaled step:
-                super().step()
-            else:  # Retake last step with smaller alpha
+            if e > self.e_prev - self.c1 * np.vdot(self.f_prev, step_prev):
+                # Retake last step with smaller alpha
                 logger.info(
                     f"Rejecting step {self.nsteps} - delta E = {e - self.e_prev:.6f}"
                 )
-                self.atoms.set_positions(self.xyz_prev + 0.5 * step_prev)
+                step_internal = self.coord_set.diff_internals(
+                    self.atoms.get_positions(), self.xyz_prev
+                )
+                self.atoms.set_positions(
+                    self.coord_set.to_cartesians(0.5 * step_internal, self.xyz_prev)
+                )
+                return
+            # Last step was accepted: save current values
+            self.e_prev = e
+            self.f_prev = f
+            self.xyz_prev = self.atoms.get_positions()
+            # Take unscaled step:
+            super().step()
 
     BacktrackingOptimizer.c1 = c1
     return BacktrackingOptimizer
