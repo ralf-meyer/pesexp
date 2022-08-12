@@ -214,7 +214,9 @@ class PRFO(InternalCoordinatesOptimizer):
         step[min_ind] = V_min[:-1, 0] / V_min[-1, 0]
 
         logger.debug(
-            f"pRFO step: lambda_p = {omega_max[-1]}, lambda_n = {omega_min[0]}"
+            "pRFO step: first 3 eigenvalues are "
+            f"{omega[0]:.2E} {omega[1]:.2E} {omega[2]:.2E}, "
+            f"lambda_p = {omega_max[-1]:.2E}, lambda_n = {omega_min[0]:.2E}"
         )
         # Tranform step back to original system
         return np.dot(V, step)
