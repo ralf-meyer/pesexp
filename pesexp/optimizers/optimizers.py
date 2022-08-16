@@ -9,6 +9,7 @@ from pesexp.hessians.hessian_approximations import (
     BFGSHessian,
     BofillHessian,
 )
+from pesexp.utils.exceptions import ConvergenceError
 
 logger = logging.getLogger(__name__)
 
@@ -182,8 +183,24 @@ class PRFO(InternalCoordinatesOptimizer):
         self.mu = mu
         InternalCoordinatesOptimizer.__init__(self, *args, **kwargs)
 
+    def calc_stepsize(self, f_trans, omega, lambda_start=0.0) -> int:
+        # if len(f_trans) == 1:
+        #     return 0.5 * omega[0] + 0.5 * np.sqrt(omega[0] ** 2 + 4 * f_trans[0] ** 2)
+        # Otherwise use iterative method to calculate the step size.
+        lamb = lambda_start
+        for _ in range(100):
+            lamb_old = lamb
+            lamb = sum(f_trans**2 / (lamb_old - omega))
+            if abs((lamb - lamb_old) / lamb) < 1e-10:
+                return lamb
+        raise ConvergenceError(
+            f"RFO step size calculation not converged: final value {lamb:.3E}, "
+            f"relative error {abs((lamb - lamb_old) / lamb):.3E}"
+        )
+
     def internal_step(self, f):
         step = np.zeros_like(f)
+        logger.debug(f"Matrix symmetry {np.linalg.norm(self.H - self.H.T):.4E}")
         omega, V = np.linalg.eigh(self.H)
         # Transform the force vector to the eigenbasis of the Hessian
         f_trans = np.dot(f, V)
@@ -213,12 +230,36 @@ class PRFO(InternalCoordinatesOptimizer):
         # and the lowest eigenvector from the minimization subset
         step[min_ind] = V_min[:-1, 0] / V_min[-1, 0]
 
+        lamb_p = self.calc_stepsize(f_trans[max_ind], omega[max_ind], lambda_start=1.0)
+        if lamb_p < omega[max_ind][0]:
+            logger.debug("Increasing lamb_p")
+            lamb_p = omega[max_ind][0] + 1e-1
+        lamb_n = self.calc_stepsize(f_trans[min_ind], omega[min_ind], lambda_start=-1.0)
+        logger.debug(f"New method gives lambda_p = {lamb_p}, lambda_n = {lamb_n}")
         logger.debug(
             "pRFO step: first 3 eigenvalues are "
-            f"{' '.join([f'{o:.3E}' for o in omega[:3]])}, "
-            f"lambda_p = {omega_max[-1]:.3E}, lambda_n = {omega_min[0]:.3E}"
+            f"{' '.join([f'{o:.5E}' for o in omega[:3]])}, "
+            f"lambda_p = {omega_max[-1]:.9E}, lambda_n = {omega_min[0]:.9E}"
         )
+
+        def relative_error(actual, desired):
+            return np.abs((desired - actual) / desired)
+
+        # assert relative_error(lamb_p, omega_max[-1]) < 1e-8
+        # assert relative_error(lamb_n, omega_min[0]) < 1e-8
+
         # Tranform step back to original system
+
+        # step += np.einsum(
+        #     "j,ij,j->i", f_trans[max_ind], V[:, max_ind],
+        #     1 / (omega[max_ind] - lamb_p)
+        # )
+        # step += np.einsum(
+        #     "j,ij,j->i", f_trans[min_ind], V[:, min_ind],
+        #     1 / (omega[min_ind] - lamb_n)
+        # )
+
+        # return step
         return np.dot(V, step)
 
 

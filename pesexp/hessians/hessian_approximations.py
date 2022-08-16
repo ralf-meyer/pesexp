@@ -12,6 +12,7 @@ class HessianApproximation(np.ndarray):
 
     def update(self, dx, dg):
         self += self.deltaH(dx, dg)
+        logger.debug(np.linalg.eigh(self)[0][:4])
 
     @abstractmethod
     def deltaH(self, dx, dg):
@@ -40,11 +41,31 @@ class PowellHessian(HessianApproximation):
     "Powell-symmetric-Broyden"
 
     def deltaH(self, dx, dg):
+        logger.debug(f"dx: {np.linalg.norm(dx):.2E}, dg: {np.linalg.norm(dg):.2E}")
         s = dg - np.dot(self, dx)
         dxdx = np.dot(dx, dx)
-        return (np.outer(s, dx) + np.outer(dx, s)) / dxdx - np.dot(
-            dx, s
-        ) / dxdx**2 * np.outer(dx, dx)
+        u = dx / np.sqrt(dxdx)
+        logger.debug(
+            f"np.dot(dx, dx) = {dxdx:.2E}, np.dot(dx, s) = {np.dot(dx, s):.2E}, "
+            f"np.dot(dx, s)/np.dot(dx, dx) = {np.dot(dx, s) / dxdx:2E}, "
+            f"np.dot(dx, dg) = {np.dot(dx, dg):.2E}, "
+            f"dx.H.dx = {dx.dot(np.dot(self, dx)):.2E}"
+        )
+        logger.debug(np.linalg.eigh((np.outer(s, dx) + np.outer(dx, s)) / dxdx)[0][:4])
+        logger.debug(np.linalg.eigh(-np.dot(dx, s) / dxdx * np.outer(u, u))[0][-4:])
+        logger.debug(
+            np.linalg.eigh(
+                (
+                    np.outer(s, dx)
+                    + np.outer(dx, s)
+                    - np.dot(dx, s) / dxdx * np.outer(dx, dx)
+                )
+                / dxdx
+            )[0][:4]
+        )
+        return (
+            np.outer(s, dx) + np.outer(dx, s) - np.dot(dx, s) / dxdx * np.outer(dx, dx)
+        ) / dxdx
 
 
 class BofillHessian(HessianApproximation):
@@ -62,3 +83,28 @@ class BofillHessian(HessianApproximation):
                 1 - phi
             ) * PowellHessian.deltaH(self, dx, dg)
         return PowellHessian.deltaH(self, dx, dg)
+
+
+def thresholding(hessian_approx, dx_thresh=0.0, dg_thresh=0.0, dx_dg_thresh=0.0):
+    """Decorator used to skip Hessian updates if the root mean squared change in
+    gradient or the displacement are smaller than the given thesholds.
+    """
+
+    class ThresholdedHessianApproximation(hessian_approx):
+        def update(self, dx, dg):
+            if (
+                np.sqrt(np.mean(dx**2)) >= self.dx_thresh
+                and np.sqrt(np.mean(dg**2)) >= self.dg_thresh
+                and np.dot(dx, dg) >= self.dx_dg_thresh
+            ):
+                self += self.deltaH(dx, dg)
+            else:
+                logger.debug(
+                    f"Skipping Hessian update for dx: {np.sqrt(np.mean(dx**2)):.2E}, "
+                    f"dg: {np.sqrt(np.mean(dg**2)):.2E} (RMS)"
+                )
+
+    ThresholdedHessianApproximation.dx_thresh = dx_thresh
+    ThresholdedHessianApproximation.dg_thresh = dg_thresh
+    ThresholdedHessianApproximation.dx_dg_thresh = dx_dg_thresh
+    return ThresholdedHessianApproximation
