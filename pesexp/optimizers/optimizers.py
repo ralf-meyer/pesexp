@@ -9,7 +9,6 @@ from pesexp.hessians.hessian_approximations import (
     BFGSHessian,
     BofillHessian,
 )
-from pesexp.utils.exceptions import ConvergenceError
 
 logger = logging.getLogger(__name__)
 
@@ -183,7 +182,7 @@ class PRFO(InternalCoordinatesOptimizer):
         self.mu = mu
         InternalCoordinatesOptimizer.__init__(self, *args, **kwargs)
 
-    def calc_stepsize(self, f_trans, omega, lambda_start=0.0) -> int:
+    def calc_stepsize(self, f_trans, omega, lambda_start=0.0) -> float:
         # if len(f_trans) == 1:
         #     return 0.5 * omega[0] + 0.5 * np.sqrt(omega[0] ** 2 + 4 * f_trans[0] ** 2)
         # Otherwise use iterative method to calculate the step size.
@@ -193,10 +192,11 @@ class PRFO(InternalCoordinatesOptimizer):
             lamb = sum(f_trans**2 / (lamb_old - omega))
             if abs((lamb - lamb_old) / lamb) < 1e-10:
                 return lamb
-        raise ConvergenceError(
-            f"RFO step size calculation not converged: final value {lamb:.3E}, "
-            f"relative error {abs((lamb - lamb_old) / lamb):.3E}"
-        )
+        return 0.0
+        # raise ConvergenceError(
+        #    f"RFO step size calculation not converged: final value {lamb:.3E}, "
+        #    f"relative error {abs((lamb - lamb_old) / lamb):.3E}"
+        # )
 
     def internal_step(self, f):
         step = np.zeros_like(f)
