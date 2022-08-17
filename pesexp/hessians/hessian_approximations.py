@@ -80,6 +80,7 @@ class BofillHessian(HessianApproximation):
 
     def deltaH(self, dx, dg):
         phi = self.phi(dx, dg)
+        logger.debug(f"BofillHessian: phi = {phi:.2E}")
         if phi > 0.0:  # Check to avoid division by zero
             return phi * MurtaghSargentHessian.deltaH(self, dx, dg) + (
                 1 - phi
@@ -104,7 +105,7 @@ class ModifiedBofillHessian(BofillHessian):
             + np.dot(s, np.dot(self, s)) * np.dot(z, np.dot(self, z))
             - np.dot(z, np.dot(self, s)) ** 2
         )
-        logger.debug(f"ModifiedBofillHessian a = {a:.2E}, b = {b:.2E}")
+        logger.debug(f"ModifiedBofillHessian detH {detH} a = {a:.2E}, b = {b:.2E}")
         # TODO: This logic should be easier to express
         if detH > 0.0:
             # "If the determinant of the Bk matrix is positive definite"
@@ -126,7 +127,7 @@ class ModifiedBofillHessian(BofillHessian):
                 # "and f(phi) is either positive or negative then we select phi = 1"
                 return 1.0
             else:
-                # "Finally, in the same situation, if thefunction f(phi) is positive
+                # "Finally, in the same situation, if the function f(phi) is positive
                 # for phi = 0 and negative for phi = 1 or vice versa we select the
                 # phi value such that f(phi) is positive"
                 if a > 0.0:
