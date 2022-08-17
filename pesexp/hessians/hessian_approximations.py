@@ -74,15 +74,75 @@ class BofillHessian(HessianApproximation):
     The variable s corresponds to xi, dg to gamma, dx to delta, and
     phi to (1 - phi) in the reference,"""
 
-    def deltaH(self, dx, dg):
+    def phi(self, dx, dg):
         s = dg - np.dot(self, dx)
-        phi = np.dot(s, dx) ** 2
+        return np.dot(s, dx) ** 2 / (np.dot(s, s) * np.dot(dx, dx))
+
+    def deltaH(self, dx, dg):
+        phi = self.phi(dx, dg)
         if phi > 0.0:  # Check to avoid division by zero
-            phi = phi / (np.dot(s, s) * np.dot(dx, dx))
             return phi * MurtaghSargentHessian.deltaH(self, dx, dg) + (
                 1 - phi
             ) * PowellHessian.deltaH(self, dx, dg)
         return PowellHessian.deltaH(self, dx, dg)
+
+
+class ModifiedBofillHessian(BofillHessian):
+    """Bofill JM. Int. J. Quantum. Chem.,94:324-332 (2003)
+
+    Note that the vectors y, d, and j are renamed to dg, dx, and s to stay
+    consistent with the names used throughout this module."""
+
+    def phi(self, dx, dg):
+        detH = np.linalg.det(self)
+        s = dg - np.dot(self, dx)
+        z = dx / np.dot(dx, dx) - s / np.dot(s, dx)
+        # f(phi) = a - phi b
+        a = 1 + np.dot(s, np.dot(self, s)) / np.dot(s, dx)
+        b = (
+            np.dot(s, dx) * np.dot(z, np.dot(self, z))
+            + np.dot(s, np.dot(self, s)) * np.dot(z, np.dot(self, z))
+            - np.dot(z, np.dot(self, s)) ** 2
+        )
+        logger.debug(f"ModifiedBofillHessian a = {a:.2E}, b = {b:.2E}")
+        # TODO: This logic should be easier to express
+        if detH > 0.0:
+            # "If the determinant of the Bk matrix is positive definite"
+            if (a > 0.0 and a - b > 0.0) or (a < 0.0 and a - b < 0.0):
+                # "and the function f(phi) is either positive or negative
+                # in all domains 0 <= phi <= 1, we take phi = 0"
+                return 0.0
+            else:
+                # "if the function f(phi) is negative for phi = 0 and positive phi = 1
+                # or vice versa, we select the phi value such that f(phi) is negative."
+                if a < 0.0:
+                    return 0.0
+                else:
+                    return 1.0
+        else:
+            # "On the other hand, if the determinant of the Bk matrix is negative
+            # definite"
+            if (a > 0.0 and a - b > 0.0) or (a < 0.0 and a - b < 0.0):
+                # "and f(phi) is either positive or negative then we select phi = 1"
+                return 1.0
+            else:
+                # "Finally, in the same situation, if thefunction f(phi) is positive
+                # for phi = 0 and negative for phi = 1 or vice versa we select the
+                # phi value such that f(phi) is positive"
+                if a > 0.0:
+                    return 0.0
+                else:
+                    return 1.0
+
+
+class FarkasSchlegelHessian(BofillHessian):
+    """Farkas and Schlegel, J. Chem. Phys., 111:10806-10814 (1999)"""
+
+    def deltaH(self, dx, dg):
+        sqrt_phi = np.sqrt(self.phi(dx, dg))
+        return sqrt_phi * MurtaghSargentHessian.deltaH(self, dx, dg) + (
+            1 - sqrt_phi
+        ) * BFGSHessian.deltaH(self, dx, dg)
 
 
 def thresholding(hessian_approx, dx_thresh=0.0, dg_thresh=0.0, dx_dg_thresh=0.0):
