@@ -12,7 +12,6 @@ class HessianApproximation(np.ndarray):
 
     def update(self, dx, dg):
         self += self.deltaH(dx, dg)
-        logger.debug(np.linalg.eigh(self)[0][:4])
 
     @abstractmethod
     def deltaH(self, dx, dg):
@@ -41,28 +40,8 @@ class PowellHessian(HessianApproximation):
     "Powell-symmetric-Broyden"
 
     def deltaH(self, dx, dg):
-        logger.debug(f"dx: {np.linalg.norm(dx):.2E}, dg: {np.linalg.norm(dg):.2E}")
         s = dg - np.dot(self, dx)
         dxdx = np.dot(dx, dx)
-        u = dx / np.sqrt(dxdx)
-        logger.debug(
-            f"np.dot(dx, dx) = {dxdx:.2E}, np.dot(dx, s) = {np.dot(dx, s):.2E}, "
-            f"np.dot(dx, s)/np.dot(dx, dx) = {np.dot(dx, s) / dxdx:2E}, "
-            f"np.dot(dx, dg) = {np.dot(dx, dg):.2E}, "
-            f"dx.H.dx = {dx.dot(np.dot(self, dx)):.2E}"
-        )
-        logger.debug(np.linalg.eigh((np.outer(s, dx) + np.outer(dx, s)) / dxdx)[0][:4])
-        logger.debug(np.linalg.eigh(-np.dot(dx, s) / dxdx * np.outer(u, u))[0][-4:])
-        logger.debug(
-            np.linalg.eigh(
-                (
-                    np.outer(s, dx)
-                    + np.outer(dx, s)
-                    - np.dot(dx, s) / dxdx * np.outer(dx, dx)
-                )
-                / dxdx
-            )[0][:4]
-        )
         return (
             np.outer(s, dx) + np.outer(dx, s) - np.dot(dx, s) / dxdx * np.outer(dx, dx)
         ) / dxdx
@@ -105,7 +84,10 @@ class ModifiedBofillHessian(BofillHessian):
             + np.dot(s, np.dot(self, s)) * np.dot(z, np.dot(self, z))
             - np.dot(z, np.dot(self, s)) ** 2
         )
-        logger.debug(f"ModifiedBofillHessian detH {detH} a = {a:.2E}, b = {b:.2E}")
+        logger.debug(
+            f"ModifiedBofillHessian detH {detH}, a-b = {a-b:.2E}, "
+            f"a = {a:.2E}, b = {b:.2E}"
+        )
         # TODO: This logic should be easier to express
         if detH > 0.0:
             # "If the determinant of the Bk matrix is positive definite"
@@ -134,6 +116,38 @@ class ModifiedBofillHessian(BofillHessian):
                     return 0.0
                 else:
                     return 1.0
+
+
+class ForcedDeterminantBofillHessian(HessianApproximation):
+    def deltaH(self, dx, dg):
+        delta_MS = MurtaghSargentHessian.deltaH(self, dx, dg)
+        delta_Powell = PowellHessian.deltaH(self, dx, dg)
+        # Determinants
+        detH = np.linalg.det(self)
+        detHMS = np.linalg.det(self + delta_MS)
+        detHPowell = np.linalg.det(self + delta_Powell)
+        logger.debug(
+            f"ForcedDetBofill: det(H) = {detH:.2E} "
+            f"det(H + MS) = {detHMS:.2E} det(H + Pow) = {detHPowell:.2E}"
+        )
+        if detH > 0.0:
+            # If we can't change the determinant use MS
+            if detHMS > 0.0 and detHPowell > 0.0:
+                return delta_MS
+            else:
+                if detHMS < 0.0:
+                    return delta_MS
+                else:
+                    return delta_Powell
+        else:
+            # We have the correct structure so we want to keep it
+            if detHMS < 0.0 and detHPowell < 0.0:
+                return delta_Powell
+            else:
+                if detHMS < 0.0:
+                    return delta_MS
+                else:
+                    return delta_Powell
 
 
 class FarkasSchlegelHessian(BofillHessian):
