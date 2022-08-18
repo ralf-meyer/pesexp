@@ -200,7 +200,6 @@ class PRFO(InternalCoordinatesOptimizer):
 
     def internal_step(self, f):
         step = np.zeros_like(f)
-        logger.debug(f"Matrix symmetry {np.linalg.norm(self.H - self.H.T):.4E}")
         omega, V = np.linalg.eigh(self.H)
         # Transform the force vector to the eigenbasis of the Hessian
         f_trans = np.dot(f, V)
@@ -230,26 +229,22 @@ class PRFO(InternalCoordinatesOptimizer):
         # and the lowest eigenvector from the minimization subset
         step[min_ind] = V_min[:-1, 0] / V_min[-1, 0]
 
-        lamb_p = self.calc_stepsize(f_trans[max_ind], omega[max_ind], lambda_start=1.0)
-        if lamb_p < omega[max_ind][0]:
-            logger.debug("Increasing lamb_p")
-            lamb_p = omega[max_ind][0] + 1e-1
-        lamb_n = self.calc_stepsize(f_trans[min_ind], omega[min_ind], lambda_start=-1.0)
-        logger.debug(f"New method gives lambda_p = {lamb_p}, lambda_n = {lamb_n}")
         logger.debug(
             "pRFO step: first 3 eigenvalues are "
-            f"{' '.join([f'{o:.5E}' for o in omega[:3]])}, "
+            f"{' '.join([f'{o:.3E}' for o in omega[:3]])}, "
             f"lambda_p = {omega_max[-1]:.9E}, lambda_n = {omega_min[0]:.9E}"
         )
 
-        def relative_error(actual, desired):
-            return np.abs((desired - actual) / desired)
-
-        # assert relative_error(lamb_p, omega_max[-1]) < 1e-8
-        # assert relative_error(lamb_n, omega_min[0]) < 1e-8
+        # Calculate step size
+        # lamb_p = self.calc_stepsize(f_trans[max_ind], omega[max_ind],
+        #                             lambda_start=1.0)
+        # if lamb_p < omega[max_ind][0]:
+        #     logger.debug("Increasing lamb_p")
+        #     lamb_p = omega[max_ind][0] + 1e-1
+        # lamb_n = self.calc_stepsize(f_trans[min_ind], omega[min_ind],
+        #                             lambda_start=-1.0)
 
         # Tranform step back to original system
-
         # step += np.einsum(
         #     "j,ij,j->i", f_trans[max_ind], V[:, max_ind],
         #     1 / (omega[max_ind] - lamb_p)
