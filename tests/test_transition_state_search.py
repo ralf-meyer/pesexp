@@ -16,6 +16,7 @@ from pesexp.calculators.calculators import (
     AdamsSurface,
     MuellerBrownSurface,
     TwoDCalculator,
+    ThreeDCalculator,
     SecondOrderSaddlePointCalculator,
 )
 
@@ -167,3 +168,21 @@ def test_quartic_saddle_point():
     assert opt.converged()
     q = coord_set.to_internals(atoms.get_positions())
     np.testing.assert_allclose(q, (0.0, 0.0), atol=1e-1)
+
+
+def test_saddle_point_with_inflection():
+    class InflectionCalc(ThreeDCalculator):
+        def energy(self, x, y, z):
+            return x**2 - y**2 + np.sign(z) * z**2
+
+        def gradient(self, x, y, z):
+            return 2 * x, -2 * y, 2 * np.abs(z)
+
+    atoms = ase.atoms.Atoms(positions=np.array([[-1, 1.5, 1.2]]))
+    atoms.calc = InflectionCalc()
+    H = np.diag([1.9, -2.1, -2.1])
+
+    opt = PRFO(atoms, H0=H, maxstep=0.05)
+    opt.run(fmax=0.001, steps=100)
+    assert opt.converged()
+    np.testing.assert_allclose(atoms.get_positions(), [[0.0, 0.0, 0.0]], atol=1e-1)
