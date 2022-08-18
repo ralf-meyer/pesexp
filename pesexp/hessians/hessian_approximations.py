@@ -74,15 +74,17 @@ class ModifiedBofillHessian(BofillHessian):
     consistent with the names used throughout this module."""
 
     def phi(self, dx, dg):
+        # TODO: The class to det and inv are highly wasteful!
         detH = np.linalg.det(self)
+        Hinv = np.linalg.inv(self)
         s = dg - np.dot(self, dx)
         z = dx / np.dot(dx, dx) - s / np.dot(s, dx)
-        # f(phi) = a - phi b
-        a = 1 + np.dot(s, np.dot(self, s)) / np.dot(s, dx)
+        # The function f(phi) is expressed as f(phi) = a - phi b
+        a = 1 + np.dot(s, np.dot(Hinv, s)) / np.dot(s, dx)
         b = (
-            np.dot(s, dx) * np.dot(z, np.dot(self, z))
-            + np.dot(s, np.dot(self, s)) * np.dot(z, np.dot(self, z))
-            - np.dot(z, np.dot(self, s)) ** 2
+            np.dot(s, dx) * np.dot(z, np.dot(Hinv, z))
+            + np.dot(s, np.dot(Hinv, s)) * np.dot(z, np.dot(Hinv, z))
+            - np.dot(z, np.dot(Hinv, s)) ** 2
         )
         logger.debug(
             f"ModifiedBofillHessian detH {detH}, a-b = {a-b:.2E}, "
@@ -91,9 +93,10 @@ class ModifiedBofillHessian(BofillHessian):
         # TODO: This logic should be easier to express
         if detH > 0.0:
             # "If the determinant of the Bk matrix is positive definite"
-            if (a > 0.0 and a - b > 0.0) or (a < 0.0 and a - b < 0.0):
+            if np.sign(a) == np.sign(a - b):
                 # "and the function f(phi) is either positive or negative
-                # in all domains 0 <= phi <= 1, we take phi = 0"
+                # in all domains phi, we take phi = 0, which
+                # corresponds to the Murtagh–Sargent formula."
                 return 0.0
             else:
                 # "if the function f(phi) is negative for phi = 0 and positive phi = 1
@@ -105,8 +108,9 @@ class ModifiedBofillHessian(BofillHessian):
         else:
             # "On the other hand, if the determinant of the Bk matrix is negative
             # definite"
-            if (a > 0.0 and a - b > 0.0) or (a < 0.0 and a - b < 0.0):
-                # "and f(phi) is either positive or negative then we select phi = 1"
+            if np.sign(a) == np.sign(a - b):
+                # "and f(phi) is either positive or negative then we select phi = 1,
+                # which corresponds to the Powell formula."
                 return 1.0
             else:
                 # "Finally, in the same situation, if the function f(phi) is positive
@@ -128,26 +132,22 @@ class ForcedDeterminantBofillHessian(HessianApproximation):
         detHPowell = np.linalg.det(self + delta_Powell)
         logger.debug(
             f"ForcedDetBofill: det(H) = {detH:.2E} "
-            f"det(H + MS) = {detHMS:.2E} det(H + Pow) = {detHPowell:.2E}"
+            f"det(H + MS) = {detHMS:.2E} det(H + Powell) = {detHPowell:.2E}"
         )
-        if detH > 0.0:
-            # If we can't change the determinant use MS
-            if detHMS > 0.0 and detHPowell > 0.0:
+        # If both choices lead to the same sign
+        if np.sign(detHMS) == np.sign(detHPowell):
+            # and the structure is incorrect
+            if detH > 0.0:
+                # Use MS to change the eigenvalues as much as possible
                 return delta_MS
             else:
-                if detHMS < 0.0:
-                    return delta_MS
-                else:
-                    return delta_Powell
-        else:
-            # We have the correct structure so we want to keep it
-            if detHMS < 0.0 and detHPowell < 0.0:
+                # If the structure is correct use Powell
                 return delta_Powell
-            else:
-                if detHMS < 0.0:
-                    return delta_MS
-                else:
-                    return delta_Powell
+        # Otherwise use the one that gives the correct sign
+        if detHMS < 0.0:
+            return delta_MS
+        else:
+            return delta_Powell
 
 
 class FarkasSchlegelHessian(BofillHessian):
