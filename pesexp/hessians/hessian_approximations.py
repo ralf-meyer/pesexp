@@ -50,20 +50,20 @@ class PowellHessian(HessianApproximation):
 class BofillHessian(HessianApproximation):
     """Bofill, J. Comput. Chem., 15:1-11 (1994)
     Note that the notation here is different to the reference.
-    The variable s corresponds to xi, dg to gamma, dx to delta, and
-    phi to (1 - phi) in the reference,"""
+    The variable s corresponds to xi, dg to gamma, dx to delta,
+    in the reference,"""
 
     def phi(self, dx, dg):
         s = dg - np.dot(self, dx)
-        return np.dot(s, dx) ** 2 / (np.dot(s, s) * np.dot(dx, dx))
+        return 1.0 - np.dot(s, dx) ** 2 / (np.dot(s, s) * np.dot(dx, dx))
 
     def deltaH(self, dx, dg):
         phi = self.phi(dx, dg)
         logger.debug(f"BofillHessian: phi = {phi:.2E}")
-        if phi > 0.0:  # Check to avoid division by zero
-            return phi * MurtaghSargentHessian.deltaH(self, dx, dg) + (
-                1 - phi
-            ) * PowellHessian.deltaH(self, dx, dg)
+        if phi < 1.0:  # Check to avoid division by zero
+            return (1 - phi) * MurtaghSargentHessian.deltaH(
+                self, dx, dg
+            ) + phi * PowellHessian.deltaH(self, dx, dg)
         return PowellHessian.deltaH(self, dx, dg)
 
 
@@ -154,7 +154,9 @@ class FarkasSchlegelHessian(BofillHessian):
     """Farkas and Schlegel, J. Chem. Phys., 111:10806-10814 (1999)"""
 
     def deltaH(self, dx, dg):
-        sqrt_phi = np.sqrt(self.phi(dx, dg))
+        # Note: the definition of phi used in this paper is different
+        # from the original, therefore 1 - phi is used here
+        sqrt_phi = np.sqrt(1.0 - self.phi(dx, dg))
         return sqrt_phi * MurtaghSargentHessian.deltaH(self, dx, dg) + (
             1 - sqrt_phi
         ) * BFGSHessian.deltaH(self, dx, dg)
