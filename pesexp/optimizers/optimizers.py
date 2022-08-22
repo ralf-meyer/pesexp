@@ -169,11 +169,13 @@ class RFO(InternalCoordinatesOptimizer):
         InternalCoordinatesOptimizer.__init__(self, *args, **kwargs)
 
     def calc_shift_parameter(self, f_trans, omega):
+        # TODO: should probably solved by a "proper" bracketing technique
+        # such as Brent's method.
         # Solve sum_i f_trans[i]**2 / (lamb - omega[i]) - lamb == 0
-        # using Newtons method: lamb = lamb - f/f'. Since we are only
-        # interested in solutions on the branch corresponding to minimization
-        # the starting position is given by:
-        lamb = min(omega[0] - 1e-10, 0.0)
+        # using Newtons method: lamb = lamb - f/f'. Initialize with
+        # the solution to the case for a single eigenvalue (omega[0]):
+        # lambda**2 - omega[0]*lambda - f_trans[0]**2 == 0:
+        lamb = 0.5 * omega[0] - np.sqrt(0.25 * omega[0] ** 2 + f_trans[0] ** 2)
         for _ in range(100):
             step = (sum(f_trans**2 / (lamb - omega)) - lamb) / (
                 -sum(f_trans**2 / (lamb - omega) ** 2) - 1
