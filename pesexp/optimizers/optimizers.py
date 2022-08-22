@@ -9,6 +9,7 @@ from pesexp.hessians.hessian_approximations import (
     BFGSHessian,
     BofillHessian,
 )
+from pesexp.utils.exceptions import ConvergenceError
 
 logger = logging.getLogger(__name__)
 
@@ -147,6 +148,10 @@ class NewtonRaphson(InternalCoordinatesOptimizer):
         omega, V = np.linalg.eigh(self.H)
         # Only take step in the direction of non-zero eigenvalues
         non_zero = np.abs(omega) > 1e-6
+        logger.debug(
+            "NewtonRaphson step: first 3 eigenvalues are "
+            f"{' '.join([f'{o:.3E}' for o in omega[:3]])}"
+        )
         return np.dot(V[:, non_zero], np.dot(f, V[:, non_zero]) / omega[non_zero])
 
 
@@ -163,16 +168,54 @@ class RFO(InternalCoordinatesOptimizer):
             self.hessian_approx = BofillHessian
         InternalCoordinatesOptimizer.__init__(self, *args, **kwargs)
 
+    def calc_shift_parameter(self, f_trans, omega):
+        # Solve sum_i f_trans[i]**2 / (lamb - omega[i]) - lamb == 0
+        # using Newtons method: lamb = lamb - f/f'. Since we are only
+        # interested in solutions on the branch corresponding to minimization
+        # the starting position is given by:
+        lamb = min(omega[0] - 1e-10, 0.0)
+        for _ in range(100):
+            step = (sum(f_trans**2 / (lamb - omega)) - lamb) / (
+                -sum(f_trans**2 / (lamb - omega) ** 2) - 1
+            )
+            lamb = lamb - step
+            if abs(step / lamb) < 1e-10:
+                return lamb
+        raise ConvergenceError(
+            f"RFO shift parameter calculation failed: final value {lamb:.3E}, "
+            f"relative error {abs(step / lamb):.3E}"
+        )
+
     def internal_step(self, f):
-        # extended Hessian matrix
-        H_ext = np.block([[self.H, -f[:, np.newaxis]], [-f, 0.0]])
+        # For minima search (mu == 0) an optimized version of the shift parameter
+        # calculation is used.
+        if self.mu == 0:
+            # Here we use equation (13) in Banerjee et al. (1984) to determine
+            # the shift parameter using the iterative procedure defined in
+            # calc_shift_parameter().
+            omega, V = np.linalg.eigh(self.H)
+            # Transform the force vector to the eigenbasis of the Hessian
+            f_trans = np.dot(f, V)
 
-        _, V = np.linalg.eigh(H_ext)
+            lamb = self.calc_shift_parameter(f_trans, omega)
 
-        # Step is calculated by proper rescaling of the eigenvector
-        # corresponding to the mu-th eigenvalue. For minimizations
-        # the lowest i.e. zeroth eigenvalue is chosen.
-        return V[:-1, self.mu] / V[-1, self.mu]
+            logger.debug(
+                "RFO step: first 3 eigenvalues are "
+                f"{' '.join([f'{o:.3E}' for o in omega[:3]])}, "
+                f"lambda = {lamb:.5E}"
+            )
+
+            assert lamb < omega[0]
+
+            return np.einsum("j,ij,j->i", f_trans, V, 1 / (omega - lamb))
+        else:
+            # A naive implementation is given by actually constructing the
+            # extended Hessian matrix and diagonalizing it.
+            H_ext = np.block([[self.H, -f[:, np.newaxis]], [-f, 0.0]])
+            _, V = np.linalg.eigh(H_ext)
+            # Step is calculated by proper rescaling of the eigenvector
+            # corresponding to the mu-th eigenvalue.
+            return V[:-1, self.mu] / V[-1, self.mu]
 
 
 class PRFO(InternalCoordinatesOptimizer):
@@ -232,7 +275,7 @@ class PRFO(InternalCoordinatesOptimizer):
         logger.debug(
             "pRFO step: first 3 eigenvalues are "
             f"{' '.join([f'{o:.3E}' for o in omega[:3]])}, "
-            f"lambda_p = {omega_max[-1]:.9E}, lambda_n = {omega_min[0]:.9E}"
+            f"lambda_p = {omega_max[-1]:.5E}, lambda_n = {omega_min[0]:.5E}"
         )
 
         # Calculate step size
