@@ -4,6 +4,7 @@ from pesexp.utils.io import read_terachem_input
 from pesexp.cli.params import parse_opt_args
 from pesexp.geometry.coordinate_systems import get_coordinate_system
 from pesexp.hessians.hessian_guesses import get_hessian_guess, filter_hessian
+from pesexp.hessians.hessian_approximations import ForcedDeterminantBFGSHessian
 from pesexp.optimizers.optimizers import RFO
 from pesexp.optimizers.convergence import TerachemConvergence
 from pesexp.optimizers.linesearch import backtracking
@@ -23,7 +24,7 @@ def run_optimization(
     # Build optimizer with backtracking and TerachemConvergence criteria
     @backtracking
     class PesexpOpt(TerachemConvergence, RFO):
-        pass
+        hessian_approx = ForcedDeterminantBFGSHessian
 
     coord_set = get_coordinate_system(atoms, coords)
     H0 = None

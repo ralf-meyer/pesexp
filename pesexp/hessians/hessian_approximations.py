@@ -19,15 +19,18 @@ class HessianApproximation(np.ndarray):
 
 
 class BFGSHessian(HessianApproximation):
-    def update(self, dx, dg):
-        if np.dot(dx, dg) < 0:
-            logger.info("Skipping BFGS update to conserve positive definiteness.")
-            return
-        self += self.deltaH(dx, dg)
-
     def deltaH(self, dx, dg):
         v = np.dot(self, dx)
         return np.outer(dg, dg) / np.dot(dx, dg) - np.outer(v, v) / np.dot(dx, v)
+
+
+class ForcedDeterminantBFGSHessian(BFGSHessian):
+    def deltaH(self, dx, dg):
+        deltaBFGS = BFGSHessian.deltaH(self, dx, dg)
+        if np.linalg.det(self + deltaBFGS) > 0.0:
+            return deltaBFGS
+        logger.info("Skipping BFGS update to conserve positive definiteness.")
+        return np.zeros_like(self)
 
 
 class MurtaghSargentHessian(HessianApproximation):
