@@ -17,7 +17,7 @@ def update_terachem_settings(calc):
 
     for key, val in geometric_params.items():
         if key not in calc.parameters:
-            calc.parameters = val
+            calc.parameters[key] = val
     return calc
 
 
