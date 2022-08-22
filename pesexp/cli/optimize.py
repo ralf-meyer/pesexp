@@ -12,6 +12,15 @@ from pesexp.optimizers.linesearch import backtracking
 logger = logging.getLogger(__name__)
 
 
+def update_terachem_settings(calc):
+    geometric_params = {"convthre": "3.0e-6", "threall": "1.0e-13"}
+
+    for key, val in geometric_params.items():
+        if key not in calc.parameters:
+            calc.parameters = val
+    return calc
+
+
 def run_optimization(
     atoms,
     coords="cart",
@@ -20,6 +29,9 @@ def run_optimization(
     hessian_thresh=None,
     name="pesexp",
 ):
+
+    # Update the settings in the Terachem calculator to match geomeTRIC:
+    atoms.calc = update_terachem_settings(atoms.calc)
 
     # Build optimizer with backtracking and TerachemConvergence criteria
     @backtracking
