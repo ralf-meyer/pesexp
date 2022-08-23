@@ -7,7 +7,6 @@ from pesexp.hessians.hessian_guesses import get_hessian_guess, filter_hessian
 from pesexp.hessians.hessian_approximations import ForcedDeterminantBFGSHessian
 from pesexp.optimizers.optimizers import RFO
 from pesexp.optimizers.convergence import TerachemConvergence
-from pesexp.optimizers.linesearch import backtracking
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +32,7 @@ def run_optimization(
     # Update the settings in the Terachem calculator to match geomeTRIC:
     atoms.calc = update_terachem_settings(atoms.calc)
 
-    # Build optimizer with backtracking and TerachemConvergence criteria
-    @backtracking
+    # Build optimizer with TerachemConvergence criteria
     class PesexpOpt(TerachemConvergence, RFO):
         hessian_approx = ForcedDeterminantBFGSHessian
 
