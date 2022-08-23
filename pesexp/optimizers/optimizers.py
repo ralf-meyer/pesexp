@@ -247,87 +247,42 @@ class RFO(InternalCoordinatesOptimizer):
 
         return self.construct_step(f_trans, V, omega, lamb)
 
-class PRFO(InternalCoordinatesOptimizer):
-    hessian_approx = BofillHessian
 
-    def __init__(self, *args, mu=0, **kwargs):
-        self.mu = mu
-        InternalCoordinatesOptimizer.__init__(self, *args, **kwargs)
-
-    def calc_stepsize(self, f_trans, omega, lambda_start=0.0) -> float:
-        # if len(f_trans) == 1:
-        #     return 0.5 * omega[0] + 0.5 * np.sqrt(omega[0] ** 2 + 4 * f_trans[0] ** 2)
-        # Otherwise use iterative method to calculate the step size.
-        lamb = lambda_start
-        for _ in range(100):
-            lamb_old = lamb
-            lamb = sum(f_trans**2 / (lamb_old - omega))
-            if abs((lamb - lamb_old) / lamb) < 1e-10:
-                return lamb
-        return 0.0
-        # raise ConvergenceError(
-        #    f"RFO step size calculation not converged: final value {lamb:.3E}, "
-        #    f"relative error {abs((lamb - lamb_old) / lamb):.3E}"
-        # )
+class PRFO(RFO):
+    def __init__(self, *args, mu=1, **kwargs):
+        RFO.__init__(self, *args, mu=mu, **kwargs)
 
     def internal_step(self, f):
-        step = np.zeros_like(f)
         omega, V = np.linalg.eigh(self.H)
         # Transform the force vector to the eigenbasis of the Hessian
         f_trans = np.dot(f, V)
         # Partition into two subproblems.
         # The coordinates mu are maximized.
-        max_ind = np.zeros_like(omega, dtype=bool)
-        max_ind[self.mu] = True
-        H_max = np.block(
-            [
-                [np.diag(omega[max_ind]), -f_trans[max_ind, np.newaxis]],
-                [-f_trans[max_ind], 0.0],
-            ]
-        )
-        omega_max, V_max = np.linalg.eigh(H_max)
+        max_ind = slice(0, self.mu)
         # The remaining coordinates that are minimized.
-        min_ind = np.logical_not(max_ind)
-        H_min = np.block(
-            [
-                [np.diag(omega[min_ind]), -f_trans[min_ind, np.newaxis]],
-                [-f_trans[min_ind], 0.0],
-            ]
+        min_ind = slice(self.mu, len(omega))
+
+        # Calculate two separate shift parameters for maximization
+        lamb_p = self.calc_shift_parameter(
+            f_trans[max_ind], omega[max_ind], mu=len(omega[max_ind])
         )
-        omega_min, V_min = np.linalg.eigh(H_min)
-        # Calculate the step by combining the highest eigenvector
-        # from the maximization subset
-        step[max_ind] = V_max[:-1, -1] / V_max[-1, -1]
-        # and the lowest eigenvector from the minimization subset
-        step[min_ind] = V_min[:-1, 0] / V_min[-1, 0]
+        # and minimization
+        lamb_n = self.calc_shift_parameter(f_trans[min_ind], omega[min_ind], mu=0)
 
         logger.debug(
             "pRFO step: first 3 eigenvalues are "
             f"{' '.join([f'{o:.3E}' for o in omega[:3]])}, "
-            f"lambda_p = {omega_max[-1]:.5E}, lambda_n = {omega_min[0]:.5E}"
+            f"lambda_p = {lamb_p:.5E}, lambda_n = {lamb_n:.5E}"
         )
 
-        # Calculate step size
-        # lamb_p = self.calc_stepsize(f_trans[max_ind], omega[max_ind],
-        #                             lambda_start=1.0)
-        # if lamb_p < omega[max_ind][0]:
-        #     logger.debug("Increasing lamb_p")
-        #     lamb_p = omega[max_ind][0] + 1e-1
-        # lamb_n = self.calc_stepsize(f_trans[min_ind], omega[min_ind],
-        #                             lambda_start=-1.0)
-
-        # Tranform step back to original system
-        # step += np.einsum(
-        #     "j,ij,j->i", f_trans[max_ind], V[:, max_ind],
-        #     1 / (omega[max_ind] - lamb_p)
-        # )
-        # step += np.einsum(
-        #     "j,ij,j->i", f_trans[min_ind], V[:, min_ind],
-        #     1 / (omega[min_ind] - lamb_n)
-        # )
-
-        # return step
-        return np.dot(V, step)
+        # Construct full step by combining maximization and minimization steps
+        step = self.construct_step(
+            f_trans[max_ind], V[:, max_ind], omega[max_ind], lamb_p
+        )
+        step += self.construct_step(
+            f_trans[min_ind], V[:, min_ind], omega[min_ind], lamb_n
+        )
+        return step
 
 
 class LBFGS(ase.optimize.LBFGS):
