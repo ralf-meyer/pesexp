@@ -169,7 +169,6 @@ class RFO(InternalCoordinatesOptimizer):
                 self.hessian_approx = BFGSHessian
             else:
                 self.hessian_approx = BofillHessian
-        print(type(self.hessian_approx), self.hessian_approx)
         InternalCoordinatesOptimizer.__init__(self, *args, **kwargs)
 
     def calc_shift_parameter(self, f_trans, omega, mu: int = 0) -> float:
