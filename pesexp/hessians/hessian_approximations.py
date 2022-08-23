@@ -27,7 +27,9 @@ class BFGSHessian(HessianApproximation):
 class ForcedDeterminantBFGSHessian(BFGSHessian):
     def deltaH(self, dx, dg):
         deltaBFGS = BFGSHessian.deltaH(self, dx, dg)
-        if np.linalg.det(self + deltaBFGS) > 0.0:
+        det = np.linalg.det(self + deltaBFGS)
+        logger.debug(f"ForcedDeterminantBFGS: new determinant will be {det}")
+        if det > 0.0:
             return deltaBFGS
         logger.info("Skipping BFGS update to conserve positive definiteness.")
         return np.zeros_like(self)
