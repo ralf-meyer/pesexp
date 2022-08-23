@@ -24,7 +24,7 @@ class BFGSHessian(HessianApproximation):
         return np.outer(dg, dg) / np.dot(dx, dg) - np.outer(v, v) / np.dot(dx, v)
 
 
-class ForcedDeterminantBFGSHessian(BFGSHessian):
+class ForcedDeterminantBFGSHessian(HessianApproximation):
     def deltaH(self, dx, dg):
         deltaBFGS = BFGSHessian.deltaH(self, dx, dg)
         det = np.linalg.det(self + deltaBFGS)
