@@ -163,10 +163,13 @@ class BFGS(NewtonRaphson):
 class RFO(InternalCoordinatesOptimizer):
     def __init__(self, *args, mu=0, **kwargs):
         self.mu = mu
-        if self.mu == 0:
-            self.hessian_approx = BFGSHessian
-        else:
-            self.hessian_approx = BofillHessian
+        # If the abstract base class has not been replaced, e.g. by subclassing:
+        if type(self.hessian_approx) is type(HessianApproximation):
+            if self.mu == 0:
+                self.hessian_approx = BFGSHessian
+            else:
+                self.hessian_approx = BofillHessian
+        print(type(self.hessian_approx), self.hessian_approx)
         InternalCoordinatesOptimizer.__init__(self, *args, **kwargs)
 
     def calc_shift_parameter(self, f_trans, omega, mu: int = 0) -> float:
