@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import ase.optimize
 import ase.units
+from scipy.optimize import brentq
 from pesexp.geometry.coordinate_systems import CartesianCoordinates
 from pesexp.hessians.hessian_approximations import (
     HessianApproximation,
@@ -168,57 +169,83 @@ class RFO(InternalCoordinatesOptimizer):
             self.hessian_approx = BofillHessian
         InternalCoordinatesOptimizer.__init__(self, *args, **kwargs)
 
-    def calc_shift_parameter(self, f_trans, omega):
-        # TODO: should probably solved by a "proper" bracketing technique
-        # such as Brent's method.
-        # Solve sum_i f_trans[i]**2 / (lamb - omega[i]) - lamb == 0
-        # using Newtons method: lamb = lamb - f/f'. Initialize with
-        # the solution to the case for a single eigenvalue (omega[0]):
-        # lambda**2 - omega[0]*lambda - f_trans[0]**2 == 0:
-        lamb = 0.5 * omega[0] - np.sqrt(0.25 * omega[0] ** 2 + f_trans[0] ** 2)
-        for _ in range(100):
-            step = (sum(f_trans**2 / (lamb - omega)) - lamb) / (
-                -sum(f_trans**2 / (lamb - omega) ** 2) - 1
-            )
-            lamb = lamb - step
-            if abs(step / lamb) < 1e-10:
-                return lamb
-        raise ConvergenceError(
-            f"RFO shift parameter calculation failed: final value {lamb:.3E}, "
-            f"relative error {abs(step / lamb):.3E}"
+    def calc_shift_parameter(self, f_trans, omega, mu: int = 0) -> float:
+        # Use scipys implementation of Brent's root finding method to solve eq. (13)
+        # in Banerjee et al. This is preferred over a derivative based method such
+        # as Newtons method because of the discontinuities in the target function
+        # and because it allows to ensure the bracketing property.
+
+        f_squared = f_trans**2
+
+        def target(x):
+            return np.sum(f_squared / (x - omega)) - x
+
+        # Find the correct interval based on the value of mu
+        if 0 < mu < len(omega):
+            # Solutions need to satisfy the bracketing property:
+            # TODO: I would prefer an estimation that does not rely on arbitrary
+            # numerical thresholds.
+            a = omega[mu - 1] + 1e-10
+            b = omega[mu] - 1e-10
+        else:
+            # Since the second part of the bracket in this case is +- inf a different
+            # approach is needed. The actual solution will always be bracketed by two
+            # limiting cases: The case where all omegas are degenerate will yield the
+            # largest magnitude shift parameter, while the case of a single eigenvalue
+            # yields the smallest magnitude shift parameter.
+            # First figure out if we are maximizing or minimizing (to select the correct
+            # reference eigenvalue and solution of a quadratic equation):
+            sign = -1.0 if mu == 0 else 1.0
+            omega_mu = omega[0] if mu == 0 else omega[-1]
+            # If all eigenvalues omega are degenerate omega[i] = omega_mu:
+            a = 0.5 * omega_mu + sign * np.sqrt(0.25 * omega_mu**2 + f_squared.sum())
+            # Skip iterative procedure if this condition is actually met to avoid
+            # numerical problems. This also covers the case of a single eigenvalue.
+            if np.all(omega == omega_mu):
+                return a
+            # Solution for single eigenvalue omega
+            b = 0.5 * omega_mu + sign * np.sqrt(0.25 * omega_mu**2 + f_squared[0])
+
+        lamb, result = brentq(target, a, b, full_output=True)
+
+        if not result.converged:
+            logger.error(result)
+            raise ConvergenceError("RFO shift parameter calculation failed")
+        return lamb
+
+    def construct_step(self, f_trans, V, omega, lamb):
+        shifted_omega = omega - lamb
+        # Only take steps in directions where the eigenvalues are larger than a fixed
+        # threshold
+        mask = np.abs(shifted_omega) > 1e-6
+        return np.einsum(
+            "j,ij,j->i", f_trans[mask], V[:, mask], 1 / shifted_omega[mask]
         )
 
     def internal_step(self, f):
-        # For minima search (mu == 0) an optimized version of the shift parameter
-        # calculation is used.
+        # Here we use equation (13) in Banerjee et al. (1984) to determine
+        # the shift parameter using the iterative procedure defined in
+        # calc_shift_parameter().
+        omega, V = np.linalg.eigh(self.H)
+        # Transform the force vector to the eigenbasis of the Hessian
+        f_trans = np.dot(f, V)
+
+        lamb = self.calc_shift_parameter(f_trans, omega, self.mu)
+
+        logger.debug(
+            "RFO step: first 3 eigenvalues are "
+            f"{' '.join([f'{o:.3E}' for o in omega[:3]])}, "
+            f"lambda = {lamb:.5E}"
+        )
+
         if self.mu == 0:
-            # Here we use equation (13) in Banerjee et al. (1984) to determine
-            # the shift parameter using the iterative procedure defined in
-            # calc_shift_parameter().
-            omega, V = np.linalg.eigh(self.H)
-            # Transform the force vector to the eigenbasis of the Hessian
-            f_trans = np.dot(f, V)
-
-            lamb = self.calc_shift_parameter(f_trans, omega)
-
-            logger.debug(
-                "RFO step: first 3 eigenvalues are "
-                f"{' '.join([f'{o:.3E}' for o in omega[:3]])}, "
-                f"lambda = {lamb:.5E}"
-            )
-
             assert lamb < omega[0]
-
-            return np.einsum("j,ij,j->i", f_trans, V, 1 / (omega - lamb))
+        elif self.mu == len(omega):
+            assert lamb > omega[-1]
         else:
-            # A naive implementation is given by actually constructing the
-            # extended Hessian matrix and diagonalizing it.
-            H_ext = np.block([[self.H, -f[:, np.newaxis]], [-f, 0.0]])
-            _, V = np.linalg.eigh(H_ext)
-            # Step is calculated by proper rescaling of the eigenvector
-            # corresponding to the mu-th eigenvalue.
-            return V[:-1, self.mu] / V[-1, self.mu]
+            assert omega[self.mu - 1] < lamb < omega[self.mu]
 
+        return self.construct_step(f_trans, V, omega, lamb)
 
 class PRFO(InternalCoordinatesOptimizer):
     hessian_approx = BofillHessian
