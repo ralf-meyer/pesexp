@@ -187,7 +187,7 @@ class ForcedDeterminantFarkasSchlegelHessian(HessianApproximation):
                 return delta_MS
             else:
                 # If the structure is correct use BFGS
-                return detHBFGS
+                return delta_BFGS
         # Otherwise use the one that gives the correct sign
         if detHMS > 0.0:
             return delta_MS
