@@ -167,6 +167,34 @@ class FarkasSchlegelHessian(BofillHessian):
         ) * BFGSHessian.deltaH(self, dx, dg)
 
 
+class ForcedDeterminantFarkasSchlegelHessian(HessianApproximation):
+    def deltaH(self, dx, dg):
+        delta_MS = MurtaghSargentHessian.deltaH(self, dx, dg)
+        delta_BFGS = BFGSHessian.deltaH(self, dx, dg)
+        # Determinants
+        detH = np.linalg.det(self)
+        detHMS = np.linalg.det(self + delta_MS)
+        detHBFGS = np.linalg.det(self + delta_BFGS)
+        logger.debug(
+            f"ForcedDetFarkasSchlegel: det(H) = {detH:.2E} "
+            f"det(H + MS) = {detHMS:.2E} det(H + BFGS) = {detHBFGS:.2E}"
+        )
+        # If both choices lead to the same sign
+        if np.sign(detHMS) == np.sign(detHBFGS):
+            # and the structure is incorrect
+            if detH < 0.0:
+                # Use MS to change the eigenvalues as much as possible
+                return delta_MS
+            else:
+                # If the structure is correct use BFGS
+                return detHBFGS
+        # Otherwise use the one that gives the correct sign
+        if detHMS > 0.0:
+            return delta_MS
+        else:
+            return delta_BFGS
+
+
 def thresholding(hessian_approx, dx_thresh=0.0, dg_thresh=0.0, dx_dg_thresh=0.0):
     """Decorator used to skip Hessian updates if the root mean squared change in
     gradient or the displacement are smaller than the given thesholds.
