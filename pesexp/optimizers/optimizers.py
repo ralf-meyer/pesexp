@@ -164,7 +164,7 @@ class RFO(InternalCoordinatesOptimizer):
     def __init__(self, *args, mu=0, **kwargs):
         self.mu = mu
         # If the abstract base class has not been replaced, e.g. by subclassing:
-        if type(self.hessian_approx) is type(HessianApproximation):
+        if self.hessian_approx == HessianApproximation:
             if self.mu == 0:
                 self.hessian_approx = BFGSHessian
             else:
