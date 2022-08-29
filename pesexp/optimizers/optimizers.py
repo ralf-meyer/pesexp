@@ -194,19 +194,21 @@ class RFO(InternalCoordinatesOptimizer):
             # approach is needed. The actual solution will always be bracketed by two
             # limiting cases: The case where all omegas are degenerate will yield the
             # largest magnitude shift parameter, while the case of a single eigenvalue
-            # yields the smallest magnitude shift parameter.
+            # yields the smallest magnitude shift parameter. Note, as additional savety
+            # factor to avoid numerical problems, these limits are calculated using the
+            # a different slope for the r.h.s of 2 and 1/2, respectively.
             # First figure out if we are maximizing or minimizing (to select the correct
             # reference eigenvalue and solution of a quadratic equation):
             sign = -1.0 if mu == 0 else 1.0
             omega_mu = omega[0] if mu == 0 else omega[-1]
             # If all eigenvalues omega are degenerate omega[i] = omega_mu:
-            a = 0.5 * omega_mu + sign * np.sqrt(0.25 * omega_mu**2 + f_squared.sum())
-            # Skip iterative procedure if this condition is actually met to avoid
-            # numerical problems. This also covers the case of a single eigenvalue.
-            if np.all(omega == omega_mu):
-                return a
+            a = 0.5 * omega_mu + sign * np.sqrt(
+                0.25 * omega_mu**2 + 2 * f_squared.sum()
+            )
             # Solution for single eigenvalue omega
-            b = 0.5 * omega_mu + sign * np.sqrt(0.25 * omega_mu**2 + f_squared[0])
+            b = 0.5 * omega_mu + sign * np.sqrt(
+                0.25 * omega_mu**2 + 0.5 * f_squared[0]
+            )
 
         lamb, result = brentq(target, a, b, full_output=True)
 
