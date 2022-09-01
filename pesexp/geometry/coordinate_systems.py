@@ -250,3 +250,6 @@ class ApproximateNormalCoordinates(CoordinateSystem):
 
     def hessian_to_internals(self, xyzs, hess_cart, grad_cart=None):
         return self.V @ hess_cart @ self.V.T
+
+    def hessian_to_cartesians(self, hess_int):
+        return self.V.T @ hess_int @ self.V
