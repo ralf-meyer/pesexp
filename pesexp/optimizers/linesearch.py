@@ -42,7 +42,7 @@ def backtracking(opt, c1=1e-4):
             self.f_prev = f
             self.xyz_prev = self.atoms.get_positions()
             # Take unscaled step:
-            super().step()
+            super().step(f=f)
 
     BacktrackingOptimizer.c1 = c1
     return BacktrackingOptimizer
@@ -125,7 +125,7 @@ def banerjee_step_control(opt, threshold=0.3, min_reduction=0.9):
             self.f_prev = f
             self.xyz_prev = self.atoms.get_positions()
             # Take unscaled step:
-            super().step()
+            super().step(f=f)
             # Save step
             self.step_prev = self.atoms.get_positions() - self.xyz_prev
 
