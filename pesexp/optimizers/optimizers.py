@@ -77,12 +77,12 @@ class InternalCoordinatesOptimizer(ase.optimize.optimize.Optimizer):
         r = self.atoms.get_positions()
         e = self.atoms.get_potential_energy()
         # MOD: Transform forces to internal coordinates
-        f = self.coord_set.force_to_internals(r, f.flatten())
+        f_int = self.coord_set.force_to_internals(r, f.flatten())
         # MOD: remove the flattening here
         self.update(r, f, self.r0, self.f0)
 
         # MOD: step in internals
-        dq = self.internal_step(f)
+        dq = self.internal_step(f_int)
         # Rescale
         maxsteplength_internal = np.max(np.abs(dq))
         if maxsteplength_internal > self.maxstep_internal:
@@ -137,7 +137,11 @@ class InternalCoordinatesOptimizer(ase.optimize.optimize.Optimizer):
             return
 
         logger.debug(f"Step {self.nsteps}: Updating the Hessian approximation.")
-        dg = -(f - f0)
+        dg = -(
+            self.coord_set.force_to_internals(r, f.flatten())
+            - self.coord_set.force_to_internals(r0, f0.flatten())
+        )
+        # dg = -(f - f0)
         self.H.update(dr, dg)
 
 
@@ -209,8 +213,12 @@ class RFO(InternalCoordinatesOptimizer):
             b = 0.5 * omega_mu + sign * np.sqrt(
                 0.25 * omega_mu**2 + 0.5 * f_squared[0]
             )
-
-        lamb, result = brentq(target, a, b, full_output=True)
+        try:
+            lamb, result = brentq(target, a, b, full_output=True)
+        except ValueError as m:
+            logger.error(omega)
+            logger.error(f"{a} {b} {target(a)} {target(b)}")
+            raise m
 
         if not result.converged:
             logger.error(result)
