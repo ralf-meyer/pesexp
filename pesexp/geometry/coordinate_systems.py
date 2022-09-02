@@ -6,6 +6,9 @@ from pesexp.geometry.utils import check_colinear
 from pesexp.geometry.connectivity import get_primitives
 from pesexp.hessians.hessian_guesses import LindhHessian
 from warnings import warn
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_coordinate_system(atoms, name="cart", coord_kwargs={}):
@@ -182,6 +185,7 @@ class DelocalizedCoordinates(InternalCoordinates):
         w, v = np.linalg.eigh(G)
         # Set of nonredundant eigenvectors (eigenvalue =/= 0)
         self.U = v[:, np.abs(w) > self.threshold].copy()
+        logger.debug(f"Contructed {self.size()} delocalized coordinates")
         if check_colinear(xyzs):
             if self.size() != xyzs.size - 5:
                 warn(
@@ -220,6 +224,7 @@ class ApproximateNormalCoordinates(CoordinateSystem):
         inds = np.abs(vals) >= self.threshold
         self.V = np.transpose(V[:, inds]).copy()
         self.x0 = atoms.get_positions()
+        logger.debug(f"Contructed {self.size()} approximate normal coordinates")
         if check_colinear(self.x0):
             if self.size() != self.x0.size - 5:
                 warn(
