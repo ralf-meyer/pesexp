@@ -2,6 +2,7 @@ import os
 import pytest
 import ase.atoms
 import ase.build
+import ase.calculators
 import ase.units
 import numpy as np
 import numdifftools as nd
@@ -19,14 +20,23 @@ from pesexp.hessians.hessian_guesses import (
 )
 
 
-def num_hessian(atoms, step=None):
+def num_diff_tools_hessian(atoms, step=None, method="forces"):
     x0 = atoms.get_positions()
 
-    def fun(x):
-        atoms.set_positions(x.reshape(-1, 3))
-        return -atoms.get_forces().flatten()
+    if method == "forces":
 
-    H = nd.Jacobian(fun, step=step)(x0.flatten())
+        def fun(x):
+            atoms.set_positions(x.reshape(-1, 3))
+            return -atoms.get_forces().flatten()
+
+        H = nd.Jacobian(fun, step=step)(x0.flatten())
+    else:
+
+        def fun(x):
+            atoms.set_positions(x.reshape(-1, 3))
+            return atoms.get_potential_energy()
+
+        H = nd.Hessian(fun, step=step)(x0.flatten())
     return 0.5 * (H + H.T)
 
 
@@ -48,10 +58,31 @@ def test_numerical_hessian(method, system):
         H = numerical_hessian(atoms, symmetrize=False)
         np.testing.assert_allclose(atoms.get_positions(), x0)
         np.testing.assert_allclose(H, H.T, atol=1e-8)
-        H_ref = num_hessian(atoms, step=1e-5)
+        H_ref = num_diff_tools_hessian(atoms, step=1e-5)
         # Symmetrize
         H = 0.5 * (H + H.T)
         np.testing.assert_allclose(H, H_ref, atol=1e-4)
+
+
+@pytest.mark.parametrize("system", ["H2", "H2O", "C3H8"])
+def test_numerical_hessian_EMT(system):
+    atoms = ase.build.molecule(system)
+    atoms.calc = ase.calculators.emt.EMT()
+
+    x0 = atoms.get_positions()
+    H = numerical_hessian(atoms, symmetrize=False)
+    np.testing.assert_allclose(atoms.get_positions(), x0)
+    np.testing.assert_allclose(H, H.T, atol=1e-8)
+    H_ref = num_diff_tools_hessian(atoms, step=1e-5)
+    # Symmetrize
+    H = 0.5 * (H + H.T)
+    np.testing.assert_allclose(H, H_ref, atol=1e-4)
+
+    # vals, vecs = np.linalg.eigh(H)
+    # if len(atoms) == 2:  # Linear molecule
+    #     assert np.nonzero(abs(vals) > 1e-6) == 3 * len(atoms) - 5
+    # else:
+    #     assert np.nonzero(abs(vals) > 1e-6) == 3 * len(atoms) - 6
 
 
 @pytest.mark.parametrize("system", ["H2", "LiF"])
@@ -110,7 +141,7 @@ def test_Fe_CO_6(method):
     H = get_hessian_guess(atoms, method)
     np.testing.assert_allclose(atoms.get_positions(), x0)
     np.testing.assert_allclose(H, H.T, atol=1e-8)
-    H_ref = num_hessian(atoms, step=1e-5)
+    H_ref = num_diff_tools_hessian(atoms, step=1e-5)
     np.testing.assert_allclose(H, H_ref, atol=1e-4)
 
 
