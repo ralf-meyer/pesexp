@@ -127,6 +127,44 @@ class ModifiedBofillHessian(BofillHessian):
                     return 1.0
 
 
+class ConstantDeterminantBofillHessian(BofillHessian):
+    """Alternate implementation of the idea in
+    Bofill JM. Int. J. Quantum. Chem.,94:324-332 (2003)
+
+    Instead of simply choosing between phi = 0.0 and phi = 1.0 we select
+    a value 0 <= phi <= 1 that keeps the determinant as close to constant
+    as possible, while enforcing a negative sign if possible.
+    """
+
+    def phi(self, dx, dg):
+        detH = np.linalg.det(self)
+        Hinv = np.linalg.inv(self)
+        s = dg - np.dot(self, dx)
+        z = dx / np.dot(dx, dx) - s / np.dot(s, dx)
+        # The function f(phi) is expressed as f(phi) = a - phi b
+        a = 1 + np.dot(s, np.dot(Hinv, s)) / np.dot(s, dx)
+        b = (
+            np.dot(s, dx) * np.dot(z, np.dot(Hinv, z))
+            + np.dot(s, np.dot(Hinv, s)) * np.dot(z, np.dot(Hinv, z))
+            - np.dot(z, np.dot(Hinv, s)) ** 2
+        )
+        phi = 0.0
+        if detH > 0.0:
+            # Try to invert the sign while conserving the magnitude, i.e. f = -1
+            target = -1.0
+        else:
+            target = 1.0
+        phi = (a - target) / b
+        # Restrict to valid range
+        phi = max(0.0, min(phi, 1.0))
+        logger.debug(
+            f"ConstantDeterminantBofillHessian detH {detH}, a-b = {a-b:.2E}, "
+            f"a = {a:.2E}, b = {b:.2E}, phi = {phi:.2f}, "
+            f"new det {detH * (a - phi * b):.2E}"
+        )
+        return phi
+
+
 class ForcedDeterminantBofillHessian(HessianApproximation):
     def deltaH(self, dx, dg):
         delta_MS = MurtaghSargentHessian.deltaH(self, dx, dg)
