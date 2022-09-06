@@ -48,13 +48,14 @@ def backtracking(opt, c1=1e-4):
     return BacktrackingOptimizer
 
 
-def banerjee_step_control(opt, threshold=0.3, min_reduction=0.9):
+def banerjee_step_control(opt, threshold=0.3, min_reduction=0.9, max_skip=None):
     class BanerjeeStepControlledOptimizer(opt):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.xyz_prev = self.atoms.get_positions()
             self.e_prev = None
             self.f_prev = np.zeros_like(self.xyz_prev)
+            self.n_skipped = 0
 
         def step(self, f=None):
             if f is None:
@@ -63,7 +64,7 @@ def banerjee_step_control(opt, threshold=0.3, min_reduction=0.9):
 
             # In the first step e_prev is None and we do not need to check any other
             # conditions
-            if self.e_prev is not None:
+            if self.e_prev is not None and self.n_skipped < self.max_skip:
                 actual_delta_e = e - self.e_prev
                 f_prev_internal = self.coord_set.force_to_internals(
                     self.xyz_prev, self.f_prev
@@ -119,6 +120,8 @@ def banerjee_step_control(opt, threshold=0.3, min_reduction=0.9):
                     self.atoms.set_positions(
                         self.coord_set.to_cartesians(t * u, self.xyz_prev)
                     )
+                    # Increase skip counter
+                    self.n_skipped += 1
                     return
             # Last step was accepted: save current values
             self.e_prev = e
@@ -128,7 +131,14 @@ def banerjee_step_control(opt, threshold=0.3, min_reduction=0.9):
             super().step(f=f)
             # Save step
             self.step_prev = self.atoms.get_positions() - self.xyz_prev
+            # Reset n_skipped counter
+            self.n_skipped = 0
 
     BanerjeeStepControlledOptimizer.threshold = threshold
     BanerjeeStepControlledOptimizer.min_reduction = min_reduction
+
+    if max_skip is None:
+        BanerjeeStepControlledOptimizer.max_skip = np.inf
+    else:
+        BanerjeeStepControlledOptimizer.max_skip = max_skip
     return BanerjeeStepControlledOptimizer
