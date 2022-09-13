@@ -20,29 +20,35 @@ from pesexp.hessians.hessian_guesses import (
 )
 
 
-def num_diff_tools_hessian(atoms, step=None, method="forces"):
+def num_diff_tools_hessian(atoms, step=None, method="central", use_forces=True):
     x0 = atoms.get_positions()
 
-    if method == "forces":
+    if method == "forward":
+        order = 1
+    else:
+        order = 2
+
+    if use_forces:
 
         def fun(x):
             atoms.set_positions(x.reshape(-1, 3))
             return -atoms.get_forces().flatten()
 
-        H = nd.Jacobian(fun, step=step)(x0.flatten())
+        H = nd.Jacobian(fun, step=step, method=method, order=order)(x0.flatten())
     else:
 
         def fun(x):
             atoms.set_positions(x.reshape(-1, 3))
             return atoms.get_potential_energy()
 
-        H = nd.Hessian(fun, step=step)(x0.flatten())
+        H = nd.Hessian(fun, step=step, method=method, order=order)(x0.flatten())
     return 0.5 * (H + H.T)
 
 
 @pytest.mark.parametrize("method", _openbabel_methods)
 @pytest.mark.parametrize("system", ["H2", "H2O", "C3H8"])
-def test_numerical_hessian(method, system):
+@pytest.mark.parametrize("diff_method", ["central", "forward"])
+def test_numerical_hessian(method, system, diff_method):
     # check if openbabel version > 3.0. This is necessary as
     # OBForceField.GetGradient is not public for prior versions.
     pytest.importorskip("openbabel", minversion="3.0")
@@ -55,25 +61,28 @@ def test_numerical_hessian(method, system):
             atoms.get_potential_energy()
     else:
         x0 = atoms.get_positions()
-        H = numerical_hessian(atoms, symmetrize=False)
+        H = numerical_hessian(atoms, symmetrize=False, method=diff_method)
         np.testing.assert_allclose(atoms.get_positions(), x0)
-        np.testing.assert_allclose(H, H.T, atol=1e-8)
-        H_ref = num_diff_tools_hessian(atoms, step=1e-5)
+        if diff_method == "central":  # Forward difference are not symmetric
+            np.testing.assert_allclose(H, H.T, atol=1e-8)
+        H_ref = num_diff_tools_hessian(atoms, step=1e-5, method=diff_method)
         # Symmetrize
         H = 0.5 * (H + H.T)
         np.testing.assert_allclose(H, H_ref, atol=1e-4)
 
 
 @pytest.mark.parametrize("system", ["H2", "H2O", "C3H8"])
-def test_numerical_hessian_EMT(system):
+@pytest.mark.parametrize("diff_method", ["central", "forward"])
+def test_numerical_hessian_EMT(system, diff_method):
     atoms = ase.build.molecule(system)
     atoms.calc = ase.calculators.emt.EMT()
 
     x0 = atoms.get_positions()
-    H = numerical_hessian(atoms, symmetrize=False)
+    H = numerical_hessian(atoms, symmetrize=False, method=diff_method)
     np.testing.assert_allclose(atoms.get_positions(), x0)
-    np.testing.assert_allclose(H, H.T, atol=1e-8)
-    H_ref = num_diff_tools_hessian(atoms, step=1e-5)
+    if diff_method == "central":  # Forward difference are not symmetric
+        np.testing.assert_allclose(H, H.T, atol=1e-8)
+    H_ref = num_diff_tools_hessian(atoms, step=1e-5, method=diff_method)
     # Symmetrize
     H = 0.5 * (H + H.T)
     np.testing.assert_allclose(H, H_ref, atol=1e-4)

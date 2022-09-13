@@ -486,23 +486,33 @@ def read_xtb_hessian(file):
     return values.reshape(N, N) * ase.units.Hartree / ase.units.Bohr**2
 
 
-def numerical_hessian(atoms, step=1e-5, symmetrize=True):
+def numerical_hessian(atoms, step=1e-5, symmetrize=True, method="forward"):
     N = len(atoms)
     x0 = atoms.get_positions()
     H = np.zeros((3 * N, 3 * N))
 
+    if method not in ["forward", "central"]:
+        raise NotImplementedError(f"Unknown method {method}")
+
+    if method == "forward":
+        g0 = -atoms.get_forces().flatten()
+
     for i in range(N):
         for c in range(3):
+            logger.debug(f"Displacements for coordinate {3*i+c}/{3*N}")
             x = x0.copy()
             x[i, c] += step
             atoms.set_positions(x)
             g_plus = -atoms.get_forces().flatten()
 
-            x = x0.copy()
-            x[i, c] -= step
-            atoms.set_positions(x)
-            g_minus = -atoms.get_forces().flatten()
-            H[3 * i + c, :] = (g_plus - g_minus) / (2 * step)
+            if method == "central":
+                x = x0.copy()
+                x[i, c] -= step
+                atoms.set_positions(x)
+                g_minus = -atoms.get_forces().flatten()
+                H[3 * i + c, :] = (g_plus - g_minus) / (2 * step)
+            elif method == "forward":
+                H[3 * i + c, :] = (g_plus - g0) / step
     atoms.set_positions(x0)
     if symmetrize:
         return 0.5 * (H + H.T)
