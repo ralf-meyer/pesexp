@@ -486,7 +486,7 @@ def read_xtb_hessian(file):
     return values.reshape(N, N) * ase.units.Hartree / ase.units.Bohr**2
 
 
-def numerical_hessian(atoms, step=1e-5, symmetrize=True, method="forward"):
+def numerical_hessian(atoms, step=1e-5, symmetrize=True, method="central"):
     N = len(atoms)
     x0 = atoms.get_positions()
     H = np.zeros((3 * N, 3 * N))
@@ -499,7 +499,7 @@ def numerical_hessian(atoms, step=1e-5, symmetrize=True, method="forward"):
 
     for i in range(N):
         for c in range(3):
-            logger.debug(f"Displacements for coordinate {3*i+c}/{3*N}")
+            logger.debug(f"Displacements for coordinate {3*i+c+1}/{3*N}")
             x = x0.copy()
             x[i, c] += step
             atoms.set_positions(x)
