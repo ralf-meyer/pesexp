@@ -2,6 +2,7 @@ import pathlib
 import logging
 import numpy as np
 import ase.io
+import ase.units
 
 from pesexp.calculators import TeraChem
 
@@ -53,6 +54,24 @@ def read_terachem_input(terachem_file):
                 params[key] = val
     atoms.calc = TeraChem(**params)
     return atoms
+
+
+def read_terachem_hessian(binary_file):
+    # TODO: Unfinished/Untested first implementation
+    # Not actually what the second value is
+    N, dim = np.fromfile(binary_file, dtype=np.int32, count=2)
+    # The next N * 4 entries are values for x y z and n_electron (?)
+    # Followed by the actual Hessian matrix, offset is multiplied by 8 since
+    # 64 bits -> 8 bytes
+    H = (
+        np.fromfile(binary_file, count=N * N * 3 * 3, offset=(2 + N * 4) * 8).reshape(
+            3 * N, 3 * N
+        )
+        * ase.units.Hartree
+        / ase.units.Bohr**2
+    )
+    # 3 x N x 3 Matrix at the end are the dipole moment derivatives
+    return H
 
 
 def read_terachem_frequencies(frequencies_file):
