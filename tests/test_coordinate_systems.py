@@ -14,9 +14,6 @@ from pesexp.geometry.coordinate_systems import (
 
 @pytest.mark.parametrize("name", g2_molecules.keys())
 def test_redundant_internals(name):
-    if name == "Si2H6":
-        # Skip Si2H6 because of a 0 != 2 pi error
-        return
     atoms = g2_molecules[name]["atoms"]
     mol = g2_molecules[name]["mol"]
     coords_ref = geometric.internal.PrimitiveInternalCoordinates(mol, connect=True)
@@ -40,9 +37,11 @@ def test_redundant_internals(name):
 
     xyzs = atoms.get_positions()
     # Test transformation to internal coordinates
-    np.testing.assert_allclose(
-        coords.to_internals(xyzs), coords_ref.calculate(xyzs), atol=1e-8
-    )
+    if name != "Si2H6":
+        # Skip Si2H6 because of a 0 != 2 pi error
+        np.testing.assert_allclose(
+            coords.to_internals(xyzs), coords_ref.calculate(xyzs), atol=1e-8
+        )
 
     B = coords.B(xyzs)
     np.testing.assert_allclose(B, coords_ref.wilsonB(xyzs), atol=1e-8)
@@ -70,8 +69,6 @@ def test_redundant_internals(name):
     )
 
     if coords_ref.bork:  # Meaning that the transformation failed:
-        with pytest.raises(RuntimeError):
-            coords.to_cartesians(dq, xyzs_dist, maxstep=np.inf)
         return
     xyzs2 = coords.to_cartesians(dq, xyzs_dist, maxstep=0.1)
 
