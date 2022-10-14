@@ -198,7 +198,7 @@ class RFO(InternalCoordinatesOptimizer):
             # approach is needed. The actual solution will always be bracketed by two
             # limiting cases: The case where all omegas are degenerate will yield the
             # largest magnitude shift parameter, while the case of a single eigenvalue
-            # yields the smallest magnitude shift parameter. Note, as additional savety
+            # yields the smallest magnitude shift parameter. Note, as additional safety
             # factor to avoid numerical problems, these limits are calculated using the
             # a different slope for the r.h.s of 2 and 1/2, respectively.
             # First figure out if we are maximizing or minimizing (to select the correct
@@ -213,11 +213,17 @@ class RFO(InternalCoordinatesOptimizer):
             b = 0.5 * omega_mu + sign * np.sqrt(
                 0.25 * omega_mu**2 + 0.5 * f_squared[0]
             )
+            if sign == -1.0:
+                a = min(a, -1e-6)
+                b = min(b, 0.0)
+            else:
+                a = max(a, 1e-6)
+                b = max(b, 0.0)
         try:
             lamb, result = brentq(target, a, b, full_output=True)
         except ValueError as m:
             logger.error(omega)
-            logger.error(f"{a} {b} {target(a)} {target(b)}")
+            logger.error(f"{a} {b} {target(a)} {target(b)} {f_squared.sum()}")
             raise m
 
         if not result.converged:
