@@ -126,6 +126,7 @@ def test_optimizers_on_organic_molecules(optimizer, mol, coord_set):
     opt.run(fmax=0.001, steps=100)
     assert opt.converged()
 
+    assert abs(atoms.get_potential_energy() - atoms_ref.get_potential_energy()) < 1e-3
     assert (
         kabsch_rmsd(atoms.get_positions(), atoms_ref.get_positions(), translate=True)
         < 1e-2
@@ -171,6 +172,7 @@ def test_optimizers_on_homoleptic_TMCs(
     opt.run(fmax=0.001, steps=100)
     assert opt.converged()
 
+    assert abs(atoms.get_potential_energy() - atoms_ref.get_potential_energy()) < 1e-3
     assert (
         kabsch_rmsd(atoms.get_positions(), atoms_ref.get_positions(), translate=True)
         < 1e-2
