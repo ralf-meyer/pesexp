@@ -160,7 +160,6 @@ class ConstantDeterminantBofillHessian(BofillHessian):
             + np.dot(s, np.dot(Hinv, s)) * np.dot(z, np.dot(Hinv, z))
             - np.dot(z, np.dot(Hinv, s)) ** 2
         )
-        phi = 0.0
         if detH > 0.0:
             # Try to invert the sign while conserving the magnitude, i.e. f = -1
             target = -1.0
