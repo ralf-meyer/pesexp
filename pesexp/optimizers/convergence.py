@@ -50,8 +50,10 @@ class ConvergenceMixin:
         if forces is None:
             forces = self.atoms.get_forces()
 
-        max_grad = np.max(np.abs(forces))
-        rms_grad = np.sqrt(np.mean(forces**2))
+        atomwise_forces = np.sqrt(np.sum(forces**2, axis=1))
+
+        max_grad = np.max(atomwise_forces)
+        rms_grad = np.sqrt(np.mean(atomwise_forces**2))
 
         e = self.atoms.get_potential_energy()
         e0 = self.e0 if self.e0 is not None else e
@@ -60,8 +62,10 @@ class ConvergenceMixin:
         r = self.atoms.get_positions()
         r0 = self.r0 if self.r0 is not None else r
         step = r - r0
-        max_step = np.max(np.abs(step))
-        rms_step = np.sqrt(np.mean(step**2))
+        atomwise_step = np.sqrt(np.sum(step**2, axis=1))
+
+        max_step = np.max(atomwise_step)
+        rms_step = np.sqrt(np.mean(atomwise_step**2))
 
         return self.convergence_condition(
             energy_change, max_grad, rms_grad, max_step, rms_step
@@ -71,8 +75,10 @@ class ConvergenceMixin:
         if forces is None:
             forces = self.atoms.get_forces()
 
-        max_grad = np.max(np.abs(forces))
-        rms_grad = np.sqrt(np.mean(forces**2))
+        atomwise_forces = np.sqrt(np.sum(forces**2, axis=1))
+
+        max_grad = np.max(atomwise_forces)
+        rms_grad = np.sqrt(np.mean(atomwise_forces**2))
 
         e = self.atoms.get_potential_energy(force_consistent=self.force_consistent)
         e0 = self.e0 if self.e0 is not None else e
@@ -81,8 +87,10 @@ class ConvergenceMixin:
         r = self.atoms.get_positions()
         r0 = self.r0 if self.r0 is not None else r
         step = r - r0
-        max_step = np.max(np.abs(step))
-        rms_step = np.sqrt(np.mean(step**2))
+        atomwise_step = np.sqrt(np.sum(step**2, axis=1))
+
+        max_step = np.max(atomwise_step)
+        rms_step = np.sqrt(np.mean(atomwise_step**2))
 
         conditions = self.convergence_condition(
             abs(delta_e), max_grad, rms_grad, max_step, rms_step
