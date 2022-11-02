@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from pesexp.hessians.hessian_approximations import (
     BFGSHessian,
+    TSBFGSHessian,
     MurtaghSargentHessian,
     PowellHessian,
     BofillHessian,
@@ -14,6 +15,7 @@ from pesexp.hessians.hessian_approximations import (
     "hess",
     [
         BFGSHessian,
+        TSBFGSHessian,
         MurtaghSargentHessian,
         PowellHessian,
         BofillHessian,
@@ -56,6 +58,7 @@ def test_scaling_invariance(hess):
     "hess",
     [
         BFGSHessian,
+        TSBFGSHessian,
         MurtaghSargentHessian,
         PowellHessian,
         BofillHessian,

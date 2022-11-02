@@ -35,6 +35,18 @@ class ForcedDeterminantBFGSHessian(HessianApproximation):
         return np.zeros_like(self)
 
 
+class TSBFGSHessian(HessianApproximation):
+    def deltaH(self, dx, dg):
+        s = dg - np.dot(self, dx)
+        vals, vecs = np.linalg.eigh(self)
+        abs_B = np.einsum("im,m,jm->ij", vecs, np.abs(vals), vecs)
+        abs_B_dx = np.dot(abs_B, dx)
+        u = np.dot(dx, dg) * dg + np.dot(dx, abs_B_dx) * abs_B_dx
+        u /= np.dot(dx, dg) ** 2 + np.dot(dx, abs_B_dx) ** 2
+        su = np.outer(s, u)
+        return (su + su.T) - np.dot(s, dx) * np.outer(u, u)
+
+
 class MurtaghSargentHessian(HessianApproximation):
     def deltaH(self, dx, dg):
         s = dg - np.dot(self, dx)
