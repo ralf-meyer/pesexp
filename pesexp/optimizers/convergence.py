@@ -97,7 +97,7 @@ class ConvergenceMixin:
         )[1]
         conv = ["*" if c else " " for c in conditions]
 
-        T = time.localtime()
+        time_now = time.localtime()
         if self.logfile is not None:
             name = self.__class__.__name__
             if self.nsteps == 0:
@@ -116,8 +116,8 @@ class ConvergenceMixin:
                 self.logfile.write(msg)
 
             msg = (
-                f"{name}:  {self.nsteps:3d} {T[3]:02d}:{T[4]:02d}"
-                f":{T[4]:02d} {e:15.6f} {delta_e:15.6f}{conv[0]} "
+                f"{name}:  {self.nsteps:3d} {time_now[3]:02d}:{time_now[4]:02d}"
+                f":{time_now[4]:02d} {e:15.6f} {delta_e:15.6f}{conv[0]} "
                 f"{max_grad:15.6f}{conv[1]} {rms_grad:15.6f}{conv[2]} "
                 f"{max_step:15.6f}{conv[3]} {rms_step:15.6f}{conv[4]}\n"
             )
