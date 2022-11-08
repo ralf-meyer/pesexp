@@ -9,9 +9,6 @@ def anc_rebuilding(opt, n_rebuild=10):
     the approximate normal coordinates every n_rebuild steps"""
 
     class Optimizer(opt):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-
         def step(self, f=None):
             if self.nsteps > 0 and self.nsteps % self.n_rebuild == 0:
                 logger.debug("Rebuilding approximate normal coordinates")
