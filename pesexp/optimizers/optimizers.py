@@ -336,24 +336,19 @@ class LBFGS(ase.optimize.LBFGS):
 
         self.update(r, f, self.r0, self.f0)
 
-        s = self.s
-        y = self.y
-        rho = self.rho
-        H0 = self.H0
-
         loopmax = np.min([self.memory, self.iteration])
         a = np.empty((loopmax,), dtype=np.float64)
 
         # ## The algorithm itself:
         q = -f.reshape(-1)
         for i in range(loopmax - 1, -1, -1):
-            a[i] = rho[i] * np.dot(s[i], q)
-            q -= a[i] * y[i]
-        z = H0 * q
+            a[i] = self.rho[i] * np.dot(self.s[i], q)
+            q -= a[i] * self.y[i]
+        z = self.H0 * q
 
         for i in range(loopmax):
-            b = rho[i] * np.dot(y[i], z)
-            z += s[i] * (a[i] - b)
+            b = self.rho[i] * np.dot(self.y[i], z)
+            z += self.s[i] * (a[i] - b)
 
         # MOD: Calculate internal step
         dq = -z
