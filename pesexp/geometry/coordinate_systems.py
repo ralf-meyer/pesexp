@@ -74,6 +74,8 @@ class CartesianCoordinates(CoordinateSystem):
 
 
 class InternalCoordinates(CoordinateSystem):
+    """Paper I: Baker et al., J. Chem. Phys. 105, 192 (1996)"""
+
     def __init__(self, primitives, save_failures=True):
         self.primitives = primitives
         self.save_failures = save_failures
@@ -92,6 +94,7 @@ class InternalCoordinates(CoordinateSystem):
         return np.linalg.pinv(B @ B.T)
 
     def Binv(self, xyzs):
+        # Equation (4) in paper I
         B = self.B(xyzs)
         return np.linalg.pinv(B @ B.T) @ B
 
@@ -104,14 +107,14 @@ class InternalCoordinates(CoordinateSystem):
     def to_cartesians(
         self,
         dq,
-        xyzs_ref,
+        xyzs_0,
         tol_q=1e-10,
         tol_x=1e-10,
         maxstep=0.05,
         maxiter=50,
         recursion_depth=0,
     ):
-        xyzs = xyzs_ref.copy()
+        xyzs = xyzs_0.copy()
         dq_start = dq.copy()
         step = np.infty * np.ones_like(xyzs)
         for _ in range(maxiter):
@@ -127,12 +130,14 @@ class InternalCoordinates(CoordinateSystem):
             xyzs = xyzs + step
             # Calculate the step for the next iteration
             dq -= step_q
+            # dq = dq_start - step_q
+        # raise ConvergenceError()
         if recursion_depth >= 3:
             save_file = "not saved as requested."
             if self.save_failures:
                 save_file = f"transformation_failure_{time.time():.0f}.pickle"
                 with open(save_file, "wb") as fout:
-                    pickle.dump([self, dq_start, xyzs_ref], fout)
+                    pickle.dump([self, dq_start, xyzs_0], fout)
             raise ConvergenceError(
                 "Transformation to Cartesians not converged"
                 f" within {maxiter} iterations, checkpoint"
@@ -142,7 +147,7 @@ class InternalCoordinates(CoordinateSystem):
         warn("Reducing step in transformation to Cartesians")
         return self.to_cartesians(
             dq_start / 2,
-            xyzs_ref,
+            xyzs_0,
             tol_q=tol_q,
             tol_x=tol_x,
             maxstep=maxstep,
@@ -157,6 +162,7 @@ class InternalCoordinates(CoordinateSystem):
         return dq
 
     def force_to_internals(self, xyzs, force_cart):
+        # Equation (5a) in paper I
         return self.Binv(xyzs) @ force_cart.flatten()
 
     def hessian_to_internals(self, xyzs, hess_cart, grad_cart=None):
@@ -173,6 +179,8 @@ class InternalCoordinates(CoordinateSystem):
 
 
 class DelocalizedCoordinates(InternalCoordinates):
+    """Paper I: Baker et al., J. Chem. Phys. 105, 192 (1996)"""
+
     def __init__(self, primitives, xyzs, threshold=1e-6):
         InternalCoordinates.__init__(self, primitives)
         self.threshold = threshold
@@ -203,6 +211,7 @@ class DelocalizedCoordinates(InternalCoordinates):
         return self.U.shape[1]
 
     def B(self, xyzs):
+        # Equation (3) in paper I
         return self.U.T @ InternalCoordinates.B(self, xyzs)
 
     def to_internals(self, xyzs):
@@ -220,9 +229,8 @@ class ApproximateNormalCoordinates(CoordinateSystem):
     def build(self, atoms, H=None):
         if H is None:
             H = LindhHessian(h_trans=0.0, h_rot=0.0).build(atoms)
-        vals, V = np.linalg.eigh(H)
-        inds = np.abs(vals) >= self.threshold
-        self.V = np.transpose(V[:, inds]).copy()
+        w, v = np.linalg.eigh(H)
+        self.B = self.BTinv = np.transpose(v[:, np.abs(w) > self.threshold]).copy()
         self.x0 = atoms.get_positions()
         logger.debug(f"Contructed {self.size()} approximate normal coordinates")
         if check_colinear(self.x0):
@@ -239,22 +247,25 @@ class ApproximateNormalCoordinates(CoordinateSystem):
             )
 
     def size(self):
-        return self.V.shape[0]
+        return self.BTinv.shape[0]
 
     def to_internals(self, xyzs):
-        return self.V @ (xyzs - self.x0).flatten()
+        return self.B @ (xyzs - self.x0).flatten()
 
     def to_cartesians(self, dq, xyzs_ref):
-        return xyzs_ref + (dq @ self.V).reshape(xyzs_ref.shape)
+        return xyzs_ref + (self.BTinv.T @ dq).reshape(xyzs_ref.shape)
 
     def diff_internals(self, xyzs1, xyzs2):
-        return self.V @ (xyzs1 - xyzs2).flatten()
+        return self.B @ (xyzs1 - xyzs2).flatten()
 
     def force_to_internals(self, xyzs, force_cart):
-        return self.V @ force_cart.flatten()
+        return self.BTinv @ force_cart.flatten()
+
+    def force_to_cartesians(self, xyzs, f_int):
+        return (self.B.T @ f_int).reshape(xyzs.shape)
 
     def hessian_to_internals(self, xyzs, hess_cart, grad_cart=None):
-        return self.V @ hess_cart @ self.V.T
+        return self.BTinv @ hess_cart @ self.BTinv.T
 
-    def hessian_to_cartesians(self, hess_int):
-        return self.V.T @ hess_int @ self.V
+    def hessian_to_cartesians(self, xyzs, hess_int, grad_int=None):
+        return self.B.T @ hess_int @ self.B

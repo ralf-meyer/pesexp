@@ -1,5 +1,7 @@
 import pytest
 import ase.io
+import ase.build
+import ase.calculators
 import numpy as np
 import geometric.internal
 from utils import g2_molecules
@@ -9,7 +11,9 @@ from pesexp.geometry.coordinate_systems import (
     InternalCoordinates,
     DelocalizedCoordinates,
     get_coordinate_system,
+    ApproximateNormalCoordinates,
 )
+from pesexp.hessians.hessian_guesses import SchlegelHessian
 
 
 @pytest.mark.parametrize("name", g2_molecules.keys())
@@ -289,3 +293,60 @@ def test_misc_6_failure(resource_path_root):
     coord_sys = get_coordinate_system(atoms, "dlc")
     # Assert that the coordinate system has the correct size.
     assert coord_sys.size() == 3 * len(atoms) - 6
+
+
+def test_anc(atol=1e-10):
+    atoms = ase.build.molecule("H2O")
+    anc = ApproximateNormalCoordinates(atoms)
+    xyzs = atoms.get_positions()
+
+    assert anc.B.shape == (3, 9)
+    assert anc.BTinv.shape == (3, 9)
+    # Definition 1 in https://en.wikipedia.org/wiki/Moore%E2%80%93Penrose_inverse
+    np.testing.assert_allclose(
+        anc.B.T @ anc.BTinv @ anc.B.T - anc.B.T, np.zeros((9, 3)), atol=atol
+    )
+    _, s, _ = np.linalg.svd(anc.BTinv)
+    np.testing.assert_allclose(s, np.ones_like(s), atol=atol)
+
+    q = anc.to_internals(xyzs)
+    np.testing.assert_allclose(q, np.zeros_like(q), atol=atol)
+    # Test that backtransform works
+    np.testing.assert_allclose(anc.to_cartesians(np.zeros(3), xyzs), xyzs)
+
+    atoms.calc = ase.calculators.emt.EMT()
+    f_cart = atoms.get_forces()
+    f_int = anc.force_to_internals(xyzs, f_cart)
+    assert f_int.shape == (3,)
+    assert abs(np.linalg.norm(f_cart) - np.linalg.norm(f_int)) < atol
+    np.testing.assert_allclose(anc.force_to_cartesians(xyzs, f_int), f_cart, atol=atol)
+
+    H_cart = SchlegelHessian().build(atoms)
+    H_int = anc.hessian_to_internals(xyzs, H_cart)
+    assert H_int.shape == (3, 3)
+    np.testing.assert_allclose(
+        anc.hessian_to_cartesians(xyzs, H_int), H_cart, atol=atol
+    )
+    eigs_cart = np.linalg.eigh(H_cart)[0]
+    eigs_int = np.linalg.eigh(H_int)[0]
+
+    np.testing.assert_allclose(eigs_int, eigs_cart[abs(eigs_cart) > 1e-6])
+
+    # Take single NR step:
+    dx = (np.linalg.pinv(H_cart) @ f_cart.flatten()).reshape(-1, 3)
+    # And shift center of mass
+    xyzs_new = xyzs + dx  # + np.array([1.0, 2.0, 3.0])
+    atoms.set_positions(xyzs_new)
+
+    q = anc.to_internals(xyzs_new)
+    np.testing.assert_allclose(q, [0.1116441, -0.1121717, 0.0], atol=1e-6)
+    dq = anc.diff_internals(xyzs_new, xyzs)
+    np.testing.assert_allclose(anc.to_cartesians(dq, xyzs), xyzs_new, atol=atol)
+
+    f_cart = atoms.get_forces()
+    f_int = anc.force_to_internals(xyzs_new, f_cart)
+    assert f_int.shape == (3,)
+    assert abs(np.linalg.norm(f_cart) - np.linalg.norm(f_int)) < atol
+    np.testing.assert_allclose(
+        anc.force_to_cartesians(xyzs_new, f_int), f_cart, atol=atol
+    )
