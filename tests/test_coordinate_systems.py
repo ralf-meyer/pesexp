@@ -339,7 +339,10 @@ def test_anc(atol=1e-10):
     atoms.set_positions(xyzs_new)
 
     q = anc.to_internals(xyzs_new)
-    np.testing.assert_allclose(q, [0.1116441, -0.1121717, 0.0], atol=1e-6)
+    # Since the direction of q is arbitrary, divide by the sign of the first component
+    np.testing.assert_allclose(
+        q / np.sign(q[0]), [0.1116441, -0.1121717, 0.0], atol=1e-6
+    )
     dq = anc.diff_internals(xyzs_new, xyzs)
     np.testing.assert_allclose(anc.to_cartesians(dq, xyzs), xyzs_new, atol=atol)
 
