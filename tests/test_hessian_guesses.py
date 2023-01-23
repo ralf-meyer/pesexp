@@ -197,6 +197,8 @@ def test_internal_coordinate_based_hessians(name, method, atol=1e-10):
         H = FischerAlmloefHessian(h_trans=h_trans, h_rot=h_rot).build(atoms)
     elif method == "lindh":
         H = LindhHessian(h_trans=h_trans, h_rot=h_rot).build(atoms)
+    else:
+        raise NotImplementedError(f"Unknown hessian method {method}")
     vals, _ = np.linalg.eigh(H)
     # Assert that there are exactly 3 eigenvalues corresponding to translation.
     assert np.count_nonzero(np.abs(vals - h_trans) < atol) == 3

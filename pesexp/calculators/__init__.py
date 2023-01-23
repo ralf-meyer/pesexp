@@ -9,7 +9,6 @@ from .calculators import (
 
 _xtb_methods = ["xtb"]
 _openbabel_methods = ["uff", "mmff94", "gaff"]
-_available_methods = _xtb_methods + _openbabel_methods
 
 
 def get_calculator(method):
@@ -21,6 +20,8 @@ def get_calculator(method):
         return XTB(method=methods[method][0], electronic_temperature=methods[method][1])
     elif method.lower() in _openbabel_methods:
         return OpenbabelFF(ff=method.upper())
+    else:
+        raise NotImplementedError(f"Unknown calculator {method}")
 
 
 __all__ = [
