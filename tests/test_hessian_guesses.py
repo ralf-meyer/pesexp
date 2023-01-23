@@ -7,7 +7,7 @@ import ase.units
 import numpy as np
 import numdifftools as nd
 import geometric.internal
-from utils import g2_molecules
+from utils import g2_molecules, xtb_installed
 from pesexp.calculators import _openbabel_methods, get_calculator
 from pesexp.hessians.hessian_guesses import (
     filter_hessian,
@@ -94,6 +94,7 @@ def test_numerical_hessian_EMT(system, diff_method):
     #     assert np.nonzero(abs(vals) > 1e-6) == 3 * len(atoms) - 6
 
 
+@xtb_installed
 @pytest.mark.parametrize("system", ["H2", "LiF"])
 def test_xtb_hessian(system):
     """TODO: For some reason I can not get this test to pass for any
