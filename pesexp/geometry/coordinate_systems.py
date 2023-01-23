@@ -222,15 +222,18 @@ class DelocalizedCoordinates(InternalCoordinates):
 
 
 class ApproximateNormalCoordinates(CoordinateSystem):
-    def __init__(self, atoms, H=None, threshold=1e-6):
+    def __init__(self, atoms, H=None, threshold=1e-6, weighted=False):
         self.threshold = threshold
-        self.build(atoms, H=H)
+        self.build(atoms, H=H, weighted=weighted)
 
-    def build(self, atoms, H=None):
+    def build(self, atoms, H=None, weighted=False):
         if H is None:
             H = LindhHessian(h_trans=0.0, h_rot=0.0).build(atoms)
         w, v = np.linalg.eigh(H)
-        self.B = self.BTinv = np.transpose(v[:, np.abs(w) > self.threshold]).copy()
+        self.B = np.transpose(v[:, np.abs(w) > self.threshold]).copy()
+        if weighted:
+            self.B *= np.sqrt(w[np.abs(w) > self.threshold, np.newaxis])
+        self.BTinv = np.linalg.pinv(self.B @ self.B.T) @ self.B
         self.x0 = atoms.get_positions()
         logger.debug(f"Contructed {self.size()} approximate normal coordinates")
         if check_colinear(self.x0):

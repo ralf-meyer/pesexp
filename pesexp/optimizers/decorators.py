@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def anc_rebuilding(opt, n_rebuild=10):
+def anc_rebuilding(opt, n_rebuild=10, weighted=False):
     """Creates a new subclass of the provided optimizer that rebuilds
     the approximate normal coordinates every n_rebuild steps"""
 
@@ -14,7 +14,7 @@ def anc_rebuilding(opt, n_rebuild=10):
                 logger.debug("Rebuilding approximate normal coordinates")
                 xyzs = self.atoms.get_positions()
                 H_cart = self.coord_set.hessian_to_cartesians(xyzs, self.H)
-                self.coord_set.build(self.atoms, H_cart)
+                self.coord_set.build(self.atoms, H_cart, weighted=weighted)
                 self.H = self.coord_set.hessian_to_internals(xyzs, H_cart)
             super().step(f=f)
 
