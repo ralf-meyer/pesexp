@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from pesexp.hessians.hessian_approximations import (
     BFGSHessian,
+    DFPHessian,
     TSBFGSHessian,
     MurtaghSargentHessian,
     PowellHessian,
@@ -15,6 +16,7 @@ from pesexp.hessians.hessian_approximations import (
     "hess",
     [
         BFGSHessian,
+        DFPHessian,
         TSBFGSHessian,
         MurtaghSargentHessian,
         PowellHessian,
@@ -56,7 +58,7 @@ def test_scaling_invariance(hess):
 
 @pytest.mark.parametrize(
     "hess",
-    [BFGSHessian, MurtaghSargentHessian],
+    [BFGSHessian, DFPHessian, MurtaghSargentHessian],
 )
 @pytest.mark.parametrize(
     "h0",
@@ -86,6 +88,7 @@ def test_anisotropic_scaling_invariance(hess, h0):
     "hess",
     [
         BFGSHessian,
+        DFPHessian,
         TSBFGSHessian,
         MurtaghSargentHessian,
         PowellHessian,
