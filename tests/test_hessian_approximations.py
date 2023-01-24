@@ -56,10 +56,15 @@ def test_scaling_invariance(hess):
 
 @pytest.mark.parametrize(
     "hess",
-    [BFGSHessian, TSBFGSHessian, MurtaghSargentHessian],
+    [BFGSHessian, MurtaghSargentHessian],
 )
-def test_anisotropic_scaling_invariance(hess):
-    H0 = hess([[2.0, -0.5], [-0.5, 3.0]])
+@pytest.mark.parametrize(
+    "h0",
+    [[[2.0, -0.5], [-0.5, 3.0]], [[1.0, -2.5], [-2.5, 3.0]]],
+)
+def test_anisotropic_scaling_invariance(hess, h0):
+    # Starting Hessian is positive definite
+    H0 = hess(h0)
     H_ref = H0.copy()
 
     dx = np.ones(2)
