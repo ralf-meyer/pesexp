@@ -232,7 +232,7 @@ class ApproximateNormalCoordinates(CoordinateSystem):
         w, v = np.linalg.eigh(H)
         self.B = np.transpose(v[:, np.abs(w) > self.threshold]).copy()
         if weighted:
-            self.B *= np.sqrt(w[np.abs(w) > self.threshold, np.newaxis])
+            self.B *= np.sqrt(abs(w[np.abs(w) > self.threshold, np.newaxis]))
         self.BTinv = np.linalg.pinv(self.B @ self.B.T) @ self.B
         self.x0 = atoms.get_positions()
         logger.debug(f"Contructed {self.size()} approximate normal coordinates")

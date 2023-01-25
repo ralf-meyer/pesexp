@@ -1,3 +1,4 @@
+import pytest
 import ase.io
 import ase.build
 import ase.calculators
@@ -68,10 +69,9 @@ def test_transformations(atol=1e-10):
     )
 
 
-def test_hessian_weighting(atol=1e-6):
-    k1 = 10.0
-    k2 = 100.0
-
+@pytest.mark.parametrize("k1", [-10.0, 10.0])
+@pytest.mark.parametrize("k2", [-100.0, 10.0, 100.0])
+def test_hessian_weighting(k1, k2, atol=1e-6):
     x0, y0 = 0.0, 0.0
     xyzs_0 = np.array([[x0, y0, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0, -1.0]])
     atoms = ase.atoms.Atoms(["H"] * 3, xyzs_0)
@@ -84,6 +84,8 @@ def test_hessian_weighting(atol=1e-6):
 
     H = np.zeros((3 * len(atoms), 3 * len(atoms)))
     H[:2, :2] = [[k1 + k2, k1 - k2], [k1 - k2, k1 + k2]]
+    vals, _ = np.linalg.eigh(H)
+    vals = vals[np.abs(vals) > 1e-6]
 
     with warnings.catch_warnings(record=True) as w:
         anc = ApproximateNormalCoordinates(atoms, H=H, weighted=True)
@@ -91,14 +93,14 @@ def test_hessian_weighting(atol=1e-6):
         assert "ApproximateNormalCoordinates found" in str(w[0].message)
 
     H_int = anc.hessian_to_internals(xyzs_0, H, grad_cart=grad(x0, y0))
-    np.testing.assert_allclose(H_int, np.eye(2), atol=atol)
+    np.testing.assert_allclose(H_int, np.diag(np.sign(vals)), atol=atol)
 
     dq1 = np.array([1.0, 0.0])
     xyzs_1 = anc.to_cartesians(dq1, xyzs_0)
     x1, y1 = xyzs_1[0, :2]
-    assert abs(fun(x1, y1) - 0.5) < atol
+    assert abs(fun(x1, y1) - 0.5 * np.sign(vals[0])) < atol
 
     dq2 = np.array([0.0, 1.0])
     xyzs_2 = anc.to_cartesians(dq2, xyzs_0)
     x2, y2 = xyzs_2[0, :2]
-    assert abs(fun(x2, y2) - 0.5) < atol
+    assert abs(fun(x2, y2) - 0.5 * np.sign(vals[1])) < atol
