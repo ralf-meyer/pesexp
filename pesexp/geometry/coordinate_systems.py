@@ -237,11 +237,16 @@ class ApproximateNormalCoordinates(CoordinateSystem):
             weights = np.ones_like(w[mask])
         elif self.weighting == "isotropic":
             weights = np.sqrt(abs(w[mask]))
-        elif self.weighting == "scaled":
+        elif isinstance(self.weighting, tuple) and len(self.weighting) == 2:
             abs_w = abs(w[mask])
             weights = np.sqrt(
                 abs_w
-                / ((abs_w - abs_w.min()) / (abs_w.max() - abs_w.min()) * 0.2 + 0.9)
+                / (
+                    (abs_w - abs_w.min())
+                    / (abs_w.max() - abs_w.min())
+                    * (self.weighting[1] - self.weighting[0])
+                    + self.weighting[0]
+                )
             )
         else:
             raise NotImplementedError(f"Unknown weighting method {self.weighting}")
