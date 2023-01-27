@@ -71,7 +71,7 @@ def test_transformations(atol=1e-10):
 
 @pytest.mark.parametrize("k1", [-10.0, 10.0])
 @pytest.mark.parametrize("k2", [-100.0, 10.0, 100.0])
-def test_hessian_weighting(k1, k2, atol=1e-6):
+def test_hessian_isotropic_weighting(k1, k2, atol=1e-6):
     x0, y0 = 0.0, 0.0
     xyzs_0 = np.array([[x0, y0, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0, -1.0]])
     atoms = ase.atoms.Atoms(["H"] * 3, xyzs_0)
@@ -88,7 +88,7 @@ def test_hessian_weighting(k1, k2, atol=1e-6):
     vals = vals[np.abs(vals) > 1e-6]
 
     with warnings.catch_warnings(record=True) as w:
-        anc = ApproximateNormalCoordinates(atoms, H=H, weighted=True)
+        anc = ApproximateNormalCoordinates(atoms, H=H, weighting="isotropic")
         # Expecting a warning about the number of coordinates
         assert "ApproximateNormalCoordinates found" in str(w[0].message)
 

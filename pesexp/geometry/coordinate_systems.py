@@ -222,17 +222,31 @@ class DelocalizedCoordinates(InternalCoordinates):
 
 
 class ApproximateNormalCoordinates(CoordinateSystem):
-    def __init__(self, atoms, H=None, threshold=1e-6, weighted=False):
+    def __init__(self, atoms, H=None, threshold=1e-6, weighting=None):
         self.threshold = threshold
-        self.build(atoms, H=H, weighted=weighted)
+        self.weighting = weighting
+        self.build(atoms, H=H)
 
-    def build(self, atoms, H=None, weighted=False):
+    def build(self, atoms, H=None):
         if H is None:
             H = LindhHessian(h_trans=0.0, h_rot=0.0).build(atoms)
         w, v = np.linalg.eigh(H)
-        self.B = np.transpose(v[:, np.abs(w) > self.threshold]).copy()
-        if weighted:
-            self.B *= np.sqrt(abs(w[np.abs(w) > self.threshold, np.newaxis]))
+        mask = abs(w) > self.threshold
+
+        if self.weighting is None:
+            weights = np.ones_like(w[mask])
+        elif self.weighting == "isotropic":
+            weights = np.sqrt(abs(w[mask]))
+        elif self.weighting == "scaled":
+            abs_w = abs(w[mask])
+            weights = np.sqrt(
+                abs_w
+                / ((abs_w - abs_w.min()) / (abs_w.max() - abs_w.min()) * 0.2 + 0.9)
+            )
+        else:
+            raise NotImplementedError(f"Unknown weighting method {self.weighting}")
+        self.B = np.transpose(v[:, mask] * weights).copy()
+
         self.BTinv = np.linalg.pinv(self.B @ self.B.T) @ self.B
         self.x0 = atoms.get_positions()
         logger.debug(f"Contructed {self.size()} approximate normal coordinates")
