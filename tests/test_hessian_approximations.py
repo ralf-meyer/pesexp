@@ -4,11 +4,14 @@ from pesexp.hessians.hessian_approximations import (
     BFGSHessian,
     DFPHessian,
     TSBFGSHessian,
+    RelativeErrorHessian,
     MurtaghSargentHessian,
     PowellHessian,
     BofillHessian,
     ModifiedBofillHessian,
     FarkasSchlegelHessian,
+    rescale_hessian_eigs,
+    rescale_hessian_step,
 )
 
 
@@ -18,6 +21,7 @@ from pesexp.hessians.hessian_approximations import (
         BFGSHessian,
         DFPHessian,
         TSBFGSHessian,
+        RelativeErrorHessian,
         MurtaghSargentHessian,
         PowellHessian,
         BofillHessian,
@@ -25,15 +29,22 @@ from pesexp.hessians.hessian_approximations import (
         FarkasSchlegelHessian,
     ],
 )
-def test_scaling_invariance(hess):
+@pytest.mark.parametrize(
+    "h0",
+    [
+        [[2.0, -0.5, 0.2], [-0.5, 3.0, 0.8], [0.2, 0.8, 1.0]],
+        [[-2.0, -0.5, 0.2], [-0.5, 3.0, 0.8], [0.2, 0.8, 1.0]],
+    ],
+)
+def test_scaling_invariance(hess, h0):
     """The updates should be invariant to various kinds of scaling."""
-    H = hess([[2.0, -0.5], [-0.5, 3.0]])
-    H_ref = H.copy()
+    H_ref = hess(h0)
 
-    dx = np.ones(2)
-    dg = np.ones(2)
+    dx = np.array([0.8, 1.3, -0.7])
+    dg = np.array([0.9, -1.1, 0.8])
     H_ref.update(dx, dg)
     # Rescale both dx and dg
+    H = hess(h0)
     H.update(1e-3 * dx, 1e-3 * dg)
     np.testing.assert_allclose(H, H_ref)
 
@@ -42,43 +53,50 @@ def test_scaling_invariance(hess):
     Hartree = 27.21
     Bohr = 0.53
 
-    H = hess([[2.0, -0.5], [-0.5, 3.0]])
-    H_ref = H.copy()
+    H_ref = hess(h0)
 
-    dx = np.ones(2)
-    dg = np.ones(2)
+    dx = np.array([0.8, 1.3, -0.7])
+    dg = np.array([0.9, -1.1, 0.8])
     # Update and then transform
     H_ref.update(dx, dg)
     H_ref *= Hartree / Bohr**2
     # Transform and then apply transformed updates
-    H *= Hartree / Bohr**2
+    H = hess(h0) * Hartree / Bohr**2
     H.update(dx * Bohr, dg * Hartree / Bohr)
     np.testing.assert_allclose(H, H_ref)
 
 
 @pytest.mark.parametrize(
     "hess",
-    [BFGSHessian, DFPHessian, MurtaghSargentHessian],
+    [
+        BFGSHessian,
+        DFPHessian,
+        MurtaghSargentHessian,
+        rescale_hessian_step(RelativeErrorHessian),
+        rescale_hessian_step(PowellHessian),
+        rescale_hessian_step(BofillHessian),
+    ],
 )
 @pytest.mark.parametrize(
     "h0",
-    [[[2.0, -0.5], [-0.5, 3.0]], [[1.0, -2.5], [-2.5, 3.0]]],
+    [
+        [[2.0, -0.5, 0.2], [-0.5, 3.0, 0.8], [0.2, 0.8, 1.0]],
+        [[-2.0, -0.5, 0.2], [-0.5, 3.0, 0.8], [0.2, 0.8, 1.0]],
+    ],
 )
 def test_anisotropic_scaling_invariance(hess, h0):
-    # Starting Hessian is positive definite
-    H0 = hess(h0)
-    H_ref = H0.copy()
+    H_ref = hess(h0)
 
-    dx = np.ones(2)
-    dg = np.ones(2)
+    dx = np.array([0.8, 1.3, -0.7])
+    dg = np.array([0.9, -1.1, 0.8])
     H_ref.update(dx, dg)
 
-    scale = np.array([2.14, 10.25])
+    scale = np.array([2.14, 10.25, 1.22])
     dz = dx * scale
     dE_dz = dg / scale
 
     scale_mat = np.outer(scale, scale)
-    H = H0.copy() / scale_mat
+    H = hess(h0) / scale_mat
     H.update(dz, dE_dz)
     H *= scale_mat
     np.testing.assert_allclose(H, H_ref)
@@ -89,7 +107,45 @@ def test_anisotropic_scaling_invariance(hess, h0):
     [
         BFGSHessian,
         DFPHessian,
+        MurtaghSargentHessian,
+    ],
+)
+@pytest.mark.parametrize(
+    "h0",
+    [
+        [[2.0, -0.5, 0.2], [-0.5, 3.0, 0.8], [0.2, 0.8, 1.0]],
+        [[-2.0, -0.5, 0.2], [-0.5, 3.0, 0.8], [0.2, 0.8, 1.0]],
+    ],
+)
+def test_arbitrary_scaling_invariance(hess, h0):
+    # Three randomly generated vectors
+    u = np.array([-1.60, 0.06, 0.74])
+    v = np.array([0.15, 0.86, 2.91])
+    w = np.array([-1.48, 0.954, -1.67])
+    B = np.outer(u, u) - np.outer(v, v) + np.outer(w, w)
+    B_inv = np.linalg.pinv(B)
+
+    H_ref = hess(h0)
+
+    dx = np.array([0.8, 1.3, -0.7])
+    dg = np.array([0.9, -1.1, 0.8])
+    H_ref.update(dx, dg)
+
+    dz = B @ dx
+    dE_dz = B_inv @ dg
+
+    H = B_inv @ hess(h0) @ B_inv
+    H.update(dz, dE_dz)
+    np.testing.assert_allclose(B @ H @ B, H_ref)
+
+
+@pytest.mark.parametrize(
+    "hess",
+    [
+        BFGSHessian,
+        DFPHessian,
         TSBFGSHessian,
+        RelativeErrorHessian,
         MurtaghSargentHessian,
         PowellHessian,
         BofillHessian,
@@ -105,6 +161,28 @@ def test_quasi_newton_condition(hess):
 
     deltaH = H.deltaH(dx, dg)
     np.testing.assert_allclose(deltaH @ dx, dg - H @ dx)
+
+
+@pytest.mark.parametrize(
+    "hess",
+    [BFGSHessian, DFPHessian, MurtaghSargentHessian],
+)
+@pytest.mark.parametrize(
+    "h0",
+    [[[2.0, -0.5], [-0.5, 3.0]], [[1.0, -2.5], [-2.5, 3.0]]],
+)
+@pytest.mark.parametrize("decorator", [rescale_hessian_eigs, rescale_hessian_step])
+def test_rescale_hessian_decorators(hess, h0, decorator):
+    # Test that the invariant Hessian updates are not affected by the decorators
+    H_ref = hess(h0)
+    H = decorator(hess)(h0)
+
+    dx = np.array([0.1, -2.3])
+    dg = np.array([0.8, 0.3])
+
+    H_ref.update(dx, dg)
+    H.update(dx, dg)
+    np.testing.assert_allclose(H, H_ref)
 
 
 def test_powell_numerical_stability(alpha=1e-9):

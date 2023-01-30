@@ -5,6 +5,59 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
+def rescale_hessian_step(hessian_approximation):
+    class RescaledHessianApproximation(hessian_approximation):
+        def update(self, dx, dg):
+            # transform
+            B = np.diag(1 / dx)
+            # Inverting a diagonal matrix is just inverting the elements:
+            BTinv = np.diag(dx)
+
+            H_trans = BTinv @ self @ BTinv.T
+            dx_trans = B @ dx
+            dg_trans = BTinv @ dg
+
+            # calculate update in transformed space
+            deltaH = hessian_approximation.deltaH(H_trans, dx_trans, dg_trans)
+
+            # backtransform
+            self += B.T @ deltaH @ B
+
+    return RescaledHessianApproximation
+
+
+def rescale_hessian_eigs(hessian_approximation, weighting=(1.0, 10.0)):
+    class RescaledHessianApproximation(hessian_approximation):
+        def update(self, dx, dg):
+            # transform
+            vals, vecs = np.linalg.eigh(self)
+            # No rescaling along singular directions
+            vals[np.abs(vals) < 1e-6] = 1.0
+            weights = np.sqrt(
+                abs(vals)
+                / (
+                    (abs(vals) - abs(vals).min())
+                    / (abs(vals).max() - abs(vals).min())
+                    * (weighting[1] - weighting[0])
+                    + weighting[0]
+                )
+            )
+            B = np.diag(weights) @ vecs.T
+            BTinv = np.linalg.pinv(B @ B.T) @ B
+
+            H_trans = BTinv @ self @ BTinv.T
+            dx_trans = B @ dx
+            dg_trans = BTinv @ dg
+
+            # calculate update in transformed space
+            deltaH = hessian_approximation.deltaH(H_trans, dx_trans, dg_trans)
+
+            # backtransform
+            self += B.T @ deltaH @ B
+
+    return RescaledHessianApproximation
+
+
 class HessianApproximation(np.ndarray):
     def __new__(cls, input_array):
         obj = np.asarray(input_array).view(cls)
@@ -54,6 +107,17 @@ class TSBFGSHessian(HessianApproximation):
         abs_B_dx = np.dot(abs_B, dx)
         u = np.dot(dx, dg) * dg + np.dot(dx, abs_B_dx) * abs_B_dx
         u /= np.dot(dx, dg) ** 2 + np.dot(dx, abs_B_dx) ** 2
+        su = np.outer(s, u)
+        return (su + su.T) - np.dot(s, dx) * np.outer(u, u)
+
+
+class RelativeErrorHessian(HessianApproximation):
+    def deltaH(self, dx, dg):
+        s = dg - np.dot(self, dx)
+        vals, vecs = np.linalg.eigh(self)
+        M = np.einsum("im,m,jm->ij", vecs, np.abs(vals), vecs)
+        M_dx = np.dot(M, dx)
+        u = M_dx / np.dot(dx, M_dx)
         su = np.outer(s, u)
         return (su + su.T) - np.dot(s, dx) * np.outer(u, u)
 
