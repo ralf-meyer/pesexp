@@ -3,6 +3,7 @@ import numpy as np
 import ase.atoms
 import ase.build
 import ase.calculators.emt
+import ase.io
 import ase.optimize
 from pesexp.calculators import OpenbabelFF
 from pesexp.geometry.connectivity import get_primitives
@@ -18,7 +19,7 @@ from rmsd import kabsch_rmsd
 
 
 @pytest.mark.parametrize("optimizer", [BFGS, LBFGS, RFO])
-def test_optimizers_on_H2(optimizer):
+def test_optimizers_on_H2(optimizer, resource_path_root):
     """Separate test case because H2 is not supported by MMFF94"""
     atoms = ase.atoms.Atoms(["H", "H"], positions=[[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]])
     atoms.calc = ase.calculators.emt.EMT()
@@ -31,9 +32,19 @@ def test_optimizers_on_H2(optimizer):
     xyzs_ref = atoms_ref.get_positions()
     r_ref = np.linalg.norm(xyzs_ref[0] - xyzs_ref[1])
 
+    ref_traj = ase.io.read(
+        resource_path_root
+        / "optimizers"
+        / "h2_trajectories"
+        / f"h2_{optimizer.__name__}.traj",
+        index=":",
+    )
     coord_set = InternalCoordinates([Distance(0, 1)])
     opt = optimizer(atoms, coord_set)
-    opt.run(fmax=0.01, steps=100)
+    for (_, ref_i) in zip(opt.irun(fmax=0.01, steps=100), ref_traj):
+        np.testing.assert_allclose(
+            atoms.get_positions(), ref_i.get_positions(), atol=1e-8
+        )
     assert opt.converged()
     # Test that the final bond length correct
     xyzs = atoms.get_positions()
