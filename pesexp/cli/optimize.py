@@ -6,7 +6,7 @@ from pesexp.geometry.coordinate_systems import get_coordinate_system
 from pesexp.hessians.hessian_guesses import get_hessian_guess, filter_hessian
 from pesexp.hessians.hessian_approximations import ForcedDeterminantBFGSHessian
 from pesexp.optimizers.optimizers import RFO
-from pesexp.optimizers.convergence import TerachemConvergence
+from pesexp.optimizers.convergence import terachem_convergence
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +32,9 @@ def run_optimization(
     # Update the settings in the Terachem calculator to match geomeTRIC:
     atoms.calc = update_terachem_settings(atoms.calc)
 
-    # Build optimizer with TerachemConvergence criteria
-    class PesexpOpt(TerachemConvergence, RFO):
+    # Build optimizer with Terachem convergence criteria
+    @terachem_convergence
+    class PesexpOpt(RFO):
         hessian_approx = ForcedDeterminantBFGSHessian
 
     coord_set = get_coordinate_system(atoms, coords)

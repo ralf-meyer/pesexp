@@ -70,32 +70,33 @@ class InternalCoordinatesOptimizer(ase.optimize.optimize.Optimizer):
         self.f0 = None
         self.e0 = None
 
+    def irun(self, fmax=0.05, steps=None):
+        """call Dynamics.irun and keep track of fmax"""
+        self.fmax = fmax
+        if steps:
+            self.max_steps = steps
+        for converged in ase.optimize.optimize.Dynamics.irun(self):
+            # let the user inspect the step and change things before logging
+            # and predicting the next step
+            yield converged
+            if not converged:
+                self.predict_next_step()
+
+    def run(self, fmax=0.05, steps=None):
+        for converged in InternalCoordinatesOptimizer.irun(
+            self, fmax=fmax, steps=steps
+        ):
+            pass
+        return converged
+
     def step(self, f=None):
         if f is None:
             f = self.atoms.get_forces()
 
         r = self.atoms.get_positions()
         e = self.atoms.get_potential_energy()
-        # MOD: Transform forces to internal coordinates
-        f_int = self.coord_set.force_to_internals(r, f.flatten())
-        # MOD: remove the flattening here
-        self.update(r, f, self.r0, self.f0)
 
-        # MOD: step in internals
-        dq = self.internal_step(f_int)
-        # Rescale
-        maxsteplength_internal = np.max(np.abs(dq))
-        if maxsteplength_internal > self.maxstep_internal:
-            dq *= self.maxstep_internal / maxsteplength_internal
-
-        # Transform to Cartesians
-        dr = self.coord_set.to_cartesians(dq, r) - r
-        # Rescale
-        maxsteplength = np.max(np.sqrt(np.sum(dr**2, axis=1)))
-        if maxsteplength > self.maxstep:
-            dr *= self.maxstep / maxsteplength
-
-        self.atoms.set_positions(r + dr)
+        self.atoms.set_positions(r + self.next_step)
         self.r0 = r.copy()
         self.f0 = f.copy()
         self.e0 = e
@@ -110,6 +111,29 @@ class InternalCoordinatesOptimizer(ase.optimize.optimize.Optimizer):
                 self.maxstep_internal,
             )
         )
+
+    def predict_next_step(self, f=None):
+        if f is None:
+            f = self.atoms.get_forces()
+        r = self.atoms.get_positions()
+        # Transform forces to internal coordinates
+        f_int = self.coord_set.force_to_internals(r, f.flatten())
+        self.update(r, f, self.r0, self.f0)
+
+        # step in internals
+        dq = self.internal_step(f_int)
+        # Rescale
+        maxsteplength_internal = np.max(np.abs(dq))
+        if maxsteplength_internal > self.maxstep_internal:
+            dq *= self.maxstep_internal / maxsteplength_internal
+
+        # Transform to Cartesians
+        dr = self.coord_set.to_cartesians(dq, r) - r
+        # Rescale
+        maxsteplength = np.max(np.sqrt(np.sum(dr**2, axis=1)))
+        if maxsteplength > self.maxstep:
+            dr *= self.maxstep / maxsteplength
+        self.next_step = dr
 
     @abstractmethod
     def internal_step(self, f):

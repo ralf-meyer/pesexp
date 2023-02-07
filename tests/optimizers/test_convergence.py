@@ -2,18 +2,21 @@ import pytest
 import ase.atoms
 import ase.calculators.emt
 from pesexp.optimizers import BFGS
-from pesexp.optimizers.convergence import ConvergenceMixin, TerachemConvergence
+from pesexp.optimizers.convergence import (
+    custom_convergence,
+    terachem_convergence,
+    baker_convergence,
+)
 
 
-@pytest.mark.parametrize("mixin", [ConvergenceMixin, TerachemConvergence])
-def test_convergence_criteria(mixin):
+@pytest.mark.parametrize(
+    "decorator", [custom_convergence, terachem_convergence, baker_convergence]
+)
+def test_convergence_criteria(decorator):
     atoms = ase.atoms.Atoms(["H", "H"], positions=[[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]])
     atoms.calc = ase.calculators.emt.EMT()
 
-    class TestOptimizer(mixin, BFGS):
-        pass
-
-    opt = TestOptimizer(atoms)
+    opt = decorator(BFGS)(atoms)
     # Check that both run and irun work
     for _ in opt.irun(steps=2):
         pass

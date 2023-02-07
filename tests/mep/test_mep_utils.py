@@ -6,8 +6,7 @@ from ase.neb import NEB
 import numpy as np
 from pesexp.mep.utils import pRFO_guess_from_neb
 from pesexp.optimizers.optimizers import PRFO
-from pesexp.optimizers.convergence import TerachemConvergence
-from pesexp.hessians.hessian_approximations import ForcedDeterminantBofillHessian
+from pesexp.optimizers.convergence import terachem_convergence
 from pesexp.geometry.coordinate_systems import ApproximateNormalCoordinates
 from pesexp.geometry.primitives import Dihedral
 
@@ -86,10 +85,9 @@ def test_pRFO_workflow_ethane():
     atoms.calc = xtb_ase_calc.XTB(method="GFN2-xTB")
     coord_set = ApproximateNormalCoordinates(atoms, H=H, threshold=1e-8)
 
-    class MyOpt(TerachemConvergence, PRFO):
-        hessian_approx = ForcedDeterminantBofillHessian
-
-    opt = MyOpt(atoms, coordinate_set=coord_set, H0=H, maxstep=0.05)
+    opt = terachem_convergence(PRFO)(
+        atoms, coordinate_set=coord_set, H0=H, maxstep=0.05
+    )
     opt.run(steps=100)
 
     assert opt.converged()
