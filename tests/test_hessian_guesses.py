@@ -11,6 +11,7 @@ from utils import g2_molecules, xtb_installed
 from pesexp.calculators import _openbabel_methods, get_calculator
 from pesexp.hessians.hessian_guesses import (
     filter_hessian,
+    project_hessian,
     get_hessian_guess,
     numerical_hessian,
     TrivialGuessHessian,
@@ -87,11 +88,12 @@ def test_numerical_hessian_EMT(system, diff_method):
     H = 0.5 * (H + H.T)
     np.testing.assert_allclose(H, H_ref, atol=1e-4)
 
-    # vals, vecs = np.linalg.eigh(H)
-    # if len(atoms) == 2:  # Linear molecule
-    #     assert np.nonzero(abs(vals) > 1e-6) == 3 * len(atoms) - 5
-    # else:
-    #     assert np.nonzero(abs(vals) > 1e-6) == 3 * len(atoms) - 6
+    H = project_hessian(H, atoms)
+    vals, vecs = np.linalg.eigh(H)
+    if len(atoms) == 2:  # Linear molecule
+        assert np.count_nonzero(abs(vals) > 1e-6) == 3 * len(atoms) - 5
+    else:
+        assert np.count_nonzero(abs(vals) > 1e-6) == 3 * len(atoms) - 6
 
 
 @xtb_installed
