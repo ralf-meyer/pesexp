@@ -3,7 +3,7 @@ from ase.neb import NEBTools
 from ase.optimize import LBFGS
 from pesexp.mep.neb import NEB
 from pesexp.calculators import MuellerBrownSurface
-from utils import get_MB_surface
+from plotting import get_MB_surface
 import numpy as np
 import matplotlib.pyplot as plt
 
