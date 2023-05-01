@@ -5,6 +5,7 @@ from pesexp.utils.io import (
     read_terachem_hessian,
     read_terachem_frequencies,
     read_terachem_input,
+    read_orca_hessian,
 )
 from pesexp.calculators import TeraChem
 
@@ -84,3 +85,11 @@ def test_read_terachem_hessian(resource_path_root):
         / ase.units.Bohr**2
     )
     np.testing.assert_allclose(H[:6, :6], H_ref, atol=1e-2)
+
+
+def test_read_orca_hessian(resource_path_root):
+    H = read_orca_hessian(resource_path_root / "io" / "baker_05_orca.hess")
+
+    # Compare to numerical differentiation reference calculated using terachem:
+    ref = np.load(resource_path_root / "io" / "baker_05_numerical_ref.npy")
+    np.testing.assert_allclose(H, ref, atol=2e-1)

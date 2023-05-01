@@ -97,3 +97,27 @@ def read_terachem_frequencies(frequencies_file):
             for sp in line[6:].split()
         ]
     return frequencies, modes
+
+
+def read_orca_hessian(hessian_file):
+    with open(hessian_file, "r") as fin:
+        lines = fin.readlines()
+    start_ind = lines.index("$hessian\n")
+    n_coords = int(lines[start_ind + 1])
+    H = np.zeros((n_coords, n_coords))
+    # The Hessian is divided into blocks of 5 coordinates
+    block_len = 5
+    n_blocks = n_coords // block_len + 1
+    hessian_lines = lines[start_ind + 2 : start_ind + 2 + (n_coords + 1) * n_blocks]
+    # Filter out the header line at the beginning of every block
+    hessian_lines = [
+        hessian_lines[i] for i in range(len(hessian_lines)) if i % (n_coords + 1) != 0
+    ]
+    for i, line in enumerate(hessian_lines):
+        block = i // n_coords
+        row = i % n_coords
+        values = [float(col) for col in line.split()[1:]]
+        H[row, block_len * block : block_len * block + len(values)] = values
+    # Convert from Hartee / Bohr^2 to eV / Ang^2
+    H *= ase.units.Hartree / ase.units.Bohr**2
+    return H
