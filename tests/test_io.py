@@ -11,14 +11,14 @@ from pesexp.calculators import TeraChem
 
 
 def test_read_molecule(resource_path_root):
-    atoms, xyz_file = read_molecule(resource_path_root / "acac/acac.inp")
+    atoms, xyz_file = read_molecule(resource_path_root / "acac" / "acac.inp")
     assert xyz_file.name == "fe_oct_2_acac_3_s_5_conf_1.xyz"
     assert atoms.get_initial_magnetic_moments().sum() == 4.0
     assert atoms.get_initial_charges().sum() == -1.0
 
 
 def test_read_terachem_input(resource_path_root):
-    atoms = read_terachem_input(resource_path_root / "acac/acac.inp")
+    atoms = read_terachem_input(resource_path_root / "acac" / "acac.inp")
     assert atoms.get_initial_magnetic_moments().sum() == 4.0
     assert atoms.get_initial_charges().sum() == -1.0
     calc = atoms.calc
@@ -43,7 +43,9 @@ def test_read_terachem_input(resource_path_root):
 
 
 def test_read_terachem_frequencies(resource_path_root):
-    freq, modes = read_terachem_frequencies(resource_path_root / "io/Frequencies.dat")
+    freq, modes = read_terachem_frequencies(
+        resource_path_root / "io" / "Frequencies.dat"
+    )
 
     assert len(freq) == 66
     # Test is sorted
@@ -67,7 +69,7 @@ def test_read_terachem_frequencies(resource_path_root):
 
 
 def test_read_terachem_hessian(resource_path_root):
-    H = read_terachem_hessian(resource_path_root / "io/Hessian.bin")
+    H = read_terachem_hessian(resource_path_root / "io" / "Hessian.bin")
 
     assert H.shape == (72, 72)
     H_ref = (
