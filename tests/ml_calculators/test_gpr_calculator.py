@@ -8,39 +8,40 @@ from pesexp.ml_calculators.kernels import RBFKernel
 
 
 def test_co_potential_curve():
-    direction = np.array([1., 2., 3.])
+    direction = np.array([1.0, 2.0, 3.0])
     direction /= np.linalg.norm(direction)
     r_train = np.linspace(0.5, 7, 11)
     energies_train = []
     images_train = []
     for ri in r_train:
         image = Atoms(
-            ['C', 'O'],
-            positions=np.array([-0.5*ri*direction, 0.5*ri*direction]))
+            ["C", "O"],
+            positions=np.array([-0.5 * ri * direction, 0.5 * ri * direction]),
+        )
         image.calc = EMT()
         energies_train.append(image.get_potential_energy())
         images_train.append(image)
 
     kernel = RBFKernel(constant=100.0, length_scale=1e-1)
-    calc = GPRCalculator(kernel=kernel, C1=1e8, C2=1e8, opt_restarts=2,
-                         verbose=1)
+    calc = GPRCalculator(kernel=kernel, C1=1e8, C2=1e8, opt_restarts=2, verbose=1)
 
     [calc.add_data(im) for im in images_train]
     calc.fit()
     np.testing.assert_allclose(
-        energies_train,
-        [calc.predict(im)[0] for im in images_train])
+        energies_train, [calc.predict(im)[0] for im in images_train]
+    )
 
 
 def test_prediction_variance():
-    direction = np.array([1., 2., 3.])
+    direction = np.array([1.0, 2.0, 3.0])
     direction /= np.linalg.norm(direction)
     r_train = [0.7, 1.7]
     images_train = []
     for ri in r_train:
         image = Atoms(
-            ['C', 'O'],
-            positions=np.array([-0.5*ri*direction, 0.5*ri*direction]))
+            ["C", "O"],
+            positions=np.array([-0.5 * ri * direction, 0.5 * ri * direction]),
+        )
         image.calc = EMT()
         images_train.append(image)
 
@@ -48,13 +49,14 @@ def test_prediction_variance():
     images_test = []
     for ri in r_test:
         image = Atoms(
-            ['C', 'O'],
-            positions=np.array([-0.5*ri*direction, 0.5*ri*direction]))
+            ["C", "O"],
+            positions=np.array([-0.5 * ri * direction, 0.5 * ri * direction]),
+        )
         image.calc = EMT()
         images_test.append(image)
 
-    kernel = RBFKernel(constant=100., length_scale=.1)
-    calc = GPRCalculator(kernel=kernel, C1=1E8, C2=1E8, opt_restarts=0)
+    kernel = RBFKernel(constant=100.0, length_scale=0.1)
+    calc = GPRCalculator(kernel=kernel, C1=1e8, C2=1e8, opt_restarts=0)
     [calc.add_data(im) for im in images_train]
 
     calc.fit()
@@ -64,11 +66,10 @@ def test_prediction_variance():
 
 
 def test_log_marginal_likelihood_derivative():
-
     kernel = RBFKernel(factor=3.1, length_scale=2.1)
     theta0 = np.exp(kernel.theta)
     calc = GPRCalculator(kernel=kernel, C1=1e8, C2=1e8, opt_restarts=0)
-    atoms = molecule('C2H6')
+    atoms = molecule("C2H6")
     atoms.calc = EMT()
 
     calc.add_data(atoms)
@@ -85,17 +86,16 @@ def test_log_marginal_likelihood_derivative():
         calc.kernel.theta = np.log(theta0 - dti)
         L_minus = calc.log_marginal_likelihood()[0]
         calc.kernel.theta = np.log(theta0)
-        dL_num[i] = (L_plus - L_minus)/(2*dt)
+        dL_num[i] = (L_plus - L_minus) / (2 * dt)
 
     np.testing.assert_allclose(dL, dL_num)
 
 
 def test_log_predictive_probability_derivative():
-
     kernel = RBFKernel(length_scale=2.1)
     theta0 = np.exp(kernel.theta)
     calc = GPRCalculator(kernel=kernel, C1=1e8, C2=1e8, opt_restarts=0)
-    atoms = molecule('C2H6')
+    atoms = molecule("C2H6")
     atoms.calc = EMT()
 
     calc.add_data(atoms)
@@ -112,6 +112,6 @@ def test_log_predictive_probability_derivative():
         calc.kernel.theta = np.log(theta0 - dti)
         L_minus = calc.log_predictive_probability()[0]
         calc.kernel.theta = np.log(theta0)
-        dL_num[i] = (L_plus - L_minus)/(2*dt)
+        dL_num[i] = (L_plus - L_minus) / (2 * dt)
 
     np.testing.assert_allclose(dL, dL_num)
