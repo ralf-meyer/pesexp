@@ -32,10 +32,10 @@ Startfile from command line: h2.inp
  On gibraltar-11 (available memory: 12144 MB)
 
 ######################################### RUNTIME INFO ##########################################
-terachem h2.inp 
+terachem h2.inp
 
 NVRM version: NVIDIA UNIX x86_64 Kernel Module  430.14  Wed May  8 01:10:53 UTC 2019
-GCC version:  gcc version 4.8.5 20150623 (Red Hat 4.8.5-39) (GCC) 
+GCC version:  gcc version 4.8.5 20150623 (Red Hat 4.8.5-39) (GCC)
 
 	linux-vdso.so.1 =>  (0x00007ffe4bdd5000)
 	libcurl.so.4 => /lib64/libcurl.so.4 (0x00002b38411b8000)
@@ -131,12 +131,12 @@ Will switch to conventional Fock if diffuse functions are detected
 X-matrix tolerance: 1.00e-04
 PRECISION: DYNAMIC
 DFT Functional requested: b3lyp
-Method: B3LYP 
-  Hartree-Fock exact exchange:          0.20 
-  Slater exchange functional:           0.80 
-  Becke 1988 exchange functional:       0.72 
-  Lee-Yang-Parr correlation functional: 0.81 
-  VWN(I) correlation functional:        0.19 
+Method: B3LYP
+  Hartree-Fock exact exchange:          0.20
+  Slater exchange functional:           0.80
+  Becke 1988 exchange functional:       0.72
+  Lee-Yang-Parr correlation functional: 0.81
+  VWN(I) correlation functional:        0.19
 Wavefunction: RESTRICTED
 DFT grid type: 1
 Using dynamic DFT grids.
@@ -169,8 +169,8 @@ Compiled with MAGMA support.  MAGMA parameters:
     Magma will use 1 out of 1 GPUs
        (Change by setting the MagmaNGPUs environment variable)
 -------------------------------------------------------------------
- CPU Memory Available: 16092.50 MegaWords 
- GPU Memory Available: 121.76 MegaWords 
+ CPU Memory Available: 16092.50 MegaWords
+ GPU Memory Available: 121.76 MegaWords
  Maximum recommended basis set size: 4000 basis functions
  (limited by GPU memory)
 -------------------------------------------------------------------
@@ -178,8 +178,8 @@ Not using d-functions. Configuring GPUs accordingly.
 0: CUBLAS initialized, available GPU memory: 1737MB
 
 ****** QM coordinates ******
-H         0.0000000000         0.0000000000         0.0000000000  
-H         0.0000000000         0.0000000000         0.7000000000  
+H         0.0000000000         0.0000000000         0.0000000000
+H         0.0000000000         0.0000000000         0.7000000000
 
 Basis set:       6-31gs
 Total atoms:     2
@@ -198,7 +198,7 @@ Nuclear repulsion energy (QM atoms): 0.755967498914 a.u.
 -=#=-   Geometry Optimizer Started    -=#=-
 -=#=-----------------------------------=#=-
 -=#=- Using Translation Rotation Internal Coordinates (TRIC)
--=#=- Building Primitive Internal Coordinates -=#=- 
+-=#=- Building Primitive Internal Coordinates -=#=-
 -=#=-  Internal Coordinate Summary   -=#=-
 -=#     Total       : 7
 -=#     Constraint  : 0
@@ -234,15 +234,15 @@ DFT grid points: 5820 (2910 points/atom)
          >>> Purifying P... IDMP = 2.22e-16 <<<
 THRESPDP set to 1.00e+00
                 >>> SWITCHING TO GRID 1 <<<
-   1     0.3448478969  -668400.6155266302  266851.9402960028  -668399.9942428706  -668400.6155266302     0.02  
+   1     0.3448478969  -668400.6155266302  266851.9402960028  -668399.9942428706  -668400.6155266302     0.02
 THRESPDP set to 4.96e-06
                 >>> SWITCHING TO GRID 0 <<<
-   2     0.0623502708  +668399.4431656877     2.0000006315    -0.5997728172      -1.1723609425     0.00  
-   3     0.0020768677      -0.0017612363     2.0000002266    -0.5843838240      -1.1741221788     0.00  
+   2     0.0623502708  +668399.4431656877     2.0000006315    -0.5997728172      -1.1723609425     0.00
+   3     0.0020768677      -0.0017612363     2.0000002266    -0.5843838240      -1.1741221788     0.00
                 >>> SWITCHING TO GRID 1 <<<
-   4     0.0005384574      -0.0000036385     2.0000060422    -0.5841799130      -1.1741258172     0.01  
-   5     0.0000830024      -0.0000001076     2.0000060412    -0.5841536941      -1.1741259249     0.01  
-   6     0.0000002477      -0.0000000031     2.0000060415    -0.5841615473      -1.1741259279     0.01  
+   4     0.0005384574      -0.0000036385     2.0000060422    -0.5841799130      -1.1741258172     0.01
+   5     0.0000830024      -0.0000001076     2.0000060412    -0.5841536941      -1.1741259249     0.01
+   6     0.0000002477      -0.0000000031     2.0000060415    -0.5841615473      -1.1741259279     0.01
 ----------------------------------------------------------------------------------------------------------
 FINAL ENERGY: -1.1741259279 a.u.
 CENTER OF MASS: {0.000000, 0.000000, 0.350000} ANGS
@@ -264,7 +264,7 @@ Setup optimizer object
 -=#=-       End of Initialization     -=#=-
 -=#=-  Checking Convergence Criteria  -=#=-
 -=#@    Cycle       Energy          Delta-E   Gradient-RMS   Gradient-Max   Displace-RMS   Displace-Max
--=#@                       Crit:  1.000e-06      3.000e-04      4.500e-04      1.200e-03      1.800e-03 
+-=#@                       Crit:  1.000e-06      3.000e-04      4.500e-04      1.200e-03      1.800e-03
 -=#@  ---------------------------------------------------------------------------------------------------
 -=#@      0      -1.1741259279        -     -    3.523e-02 N    3.523e-02 N        -     -        -     -
 -=#=-----------------------------------=#=-
@@ -288,12 +288,12 @@ DFT grid points: 5820 (2910 points/atom)
          >>> Purifying P... IDMP = 3.33e-16 <<<
 THRESPDP set to 4.96e-06
                 >>> SWITCHING TO GRID 1 <<<
-   1     0.0239853246      -1.1752304107     2.0000046435    -0.5793951413      -1.1752304107     0.01  
+   1     0.0239853246      -1.1752304107     2.0000046435    -0.5793951413      -1.1752304107     0.01
                 >>> SWITCHING TO GRID 0 <<<
-   2     0.0038497706      -0.0002437845     2.0000109449    -0.5725829989      -1.1754741952     0.00  
+   2     0.0038497706      -0.0002437845     2.0000109449    -0.5725829989      -1.1754741952     0.00
                 >>> SWITCHING TO GRID 1 <<<
-   3     0.0000198615      -0.0000008971     2.0000044815    -0.5735170562      -1.1754750922     0.01  
-   4     0.0000059701      -0.0000000001     2.0000044816    -0.5735204460      -1.1754750923     0.01  
+   3     0.0000198615      -0.0000008971     2.0000044815    -0.5735170562      -1.1754750922     0.01
+   4     0.0000059701      -0.0000000001     2.0000044816    -0.5735204460      -1.1754750923     0.01
 ----------------------------------------------------------------------------------------------------------
 FINAL ENERGY: -1.1754750923 a.u.
 CENTER OF MASS: {0.000000, 0.000000, 0.350000} ANGS
@@ -311,7 +311,7 @@ Gradient units are Hartree/Bohr
 -=#=-    Now Returning to Optimizer   -=#=-
 -=#=-  Checking Convergence Criteria  -=#=-
 -=#     Cycle       Energy          Delta-E   Gradient-RMS   Gradient-Max   Displace-RMS   Displace-Max
--=#                        Crit:  1.000e-06      3.000e-04      4.500e-04      1.200e-03      1.800e-03 
+-=#                        Crit:  1.000e-06      3.000e-04      4.500e-04      1.200e-03      1.800e-03
 -=#   ---------------------------------------------------------------------------------------------------
 -=#@      1      -1.1754750923   -1.349e-03 N    2.604e-03 N    2.604e-03 N    1.959e-02 N    1.959e-02 N
 -=#  Adjusting Trust Radius
@@ -340,9 +340,9 @@ DFT grid points: 5828 (2914 points/atom)
          >>> Purifying P... IDMP = 2.22e-16 <<<
 THRESPDP set to 4.96e-06
                 >>> SWITCHING TO GRID 1 <<<
-   1     0.0018695326      -1.1754822716     2.0000043751    -0.5731537508      -1.1754822716     0.01  
-   2     0.0002995702      -0.0000014458     2.0000043610    -0.5726250106      -1.1754837174     0.01  
-   3     0.0000000049      -0.0000000381     2.0000043629    -0.5726980130      -1.1754837555     0.01  
+   1     0.0018695326      -1.1754822716     2.0000043751    -0.5731537508      -1.1754822716     0.01
+   2     0.0002995702      -0.0000014458     2.0000043610    -0.5726250106      -1.1754837174     0.01
+   3     0.0000000049      -0.0000000381     2.0000043629    -0.5726980130      -1.1754837555     0.01
 ----------------------------------------------------------------------------------------------------------
 FINAL ENERGY: -1.1754837555 a.u.
 CENTER OF MASS: {0.000000, 0.000000, 0.350000} ANGS
@@ -360,7 +360,7 @@ Gradient units are Hartree/Bohr
 -=#=-    Now Returning to Optimizer   -=#=-
 -=#=-  Checking Convergence Criteria  -=#=-
 -=#     Cycle       Energy          Delta-E   Gradient-RMS   Gradient-Max   Displace-RMS   Displace-Max
--=#                        Crit:  1.000e-06      3.000e-04      4.500e-04      1.200e-03      1.800e-03 
+-=#                        Crit:  1.000e-06      3.000e-04      4.500e-04      1.200e-03      1.800e-03
 -=#   ---------------------------------------------------------------------------------------------------
 -=#@      2      -1.1754837555   -8.663e-06 N    3.373e-04 N    3.373e-04 Y    1.564e-03 N    1.564e-03 Y
 -=#  Adjusting Trust Radius
@@ -389,9 +389,9 @@ DFT grid points: 5828 (2914 points/atom)
          >>> Purifying P... IDMP = 5.55e-16 <<<
 THRESPDP set to 4.96e-06
                 >>> SWITCHING TO GRID 1 <<<
-   1     0.0002785038      -1.1754838727     2.0000043474    -0.5726436264      -1.1754838727     0.01  
-   2     0.0000445868      -0.0000000321     2.0000043453    -0.5725649004      -1.1754839048     0.01  
-   3     0.0000000001      -0.0000000009     2.0000043456    -0.5725757642      -1.1754839056     0.01  
+   1     0.0002785038      -1.1754838727     2.0000043474    -0.5726436264      -1.1754838727     0.01
+   2     0.0000445868      -0.0000000321     2.0000043453    -0.5725649004      -1.1754839048     0.01
+   3     0.0000000001      -0.0000000009     2.0000043456    -0.5725757642      -1.1754839056     0.01
 ----------------------------------------------------------------------------------------------------------
 FINAL ENERGY: -1.1754839056 a.u.
 CENTER OF MASS: {0.000000, -0.000000, 0.350000} ANGS
@@ -409,14 +409,13 @@ Gradient units are Hartree/Bohr
 -=#=-    Now Returning to Optimizer   -=#=-
 -=#=-  Checking Convergence Criteria  -=#=-
 -=#     Cycle       Energy          Delta-E   Gradient-RMS   Gradient-Max   Displace-RMS   Displace-Max
--=#                        Crit:  1.000e-06      3.000e-04      4.500e-04      1.200e-03      1.800e-03 
+-=#                        Crit:  1.000e-06      3.000e-04      4.500e-04      1.200e-03      1.800e-03
 -=#   ---------------------------------------------------------------------------------------------------
 -=#@      3      -1.1754839056   -1.501e-07 Y    4.275e-06 Y    4.275e-06 Y    2.326e-04 Y    2.326e-04 Y
 -=#=-----------------------------------=#=-
 -=#=-     Optimization Converged.     -=#=-
 -=#=-----------------------------------=#=-
 Writing out molden info
-Total processing time: 0.17 sec 
+Total processing time: 0.17 sec
 
  Job finished: Wed Nov  3 12:44:54 2021
-
