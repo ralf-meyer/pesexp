@@ -111,3 +111,14 @@ def test_calc_shift_parameter_fail2():
     shift = opt.calc_shift_parameter(f_trans, omega, mu)
     ref = 0.72761
     assert abs(shift - ref) < 1e-5
+
+
+def test_calc_shift_parameter_fail3():
+    """Previously failed run (in baker system 10)"""
+    opt = RFO(Atoms())
+    mu = 1
+    f_trans = np.array([1.03235612e-08])
+    omega = np.array([0.72736632])
+    shift = opt.calc_shift_parameter(f_trans, omega, mu)
+    ref = 0.72737
+    assert abs(shift - ref) < 1e-5

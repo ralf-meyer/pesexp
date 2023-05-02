@@ -209,6 +209,12 @@ class RFO(InternalCoordinatesOptimizer):
 
         f_squared = f_trans**2
 
+        # Analytical solution for eq. (13) if the sum reduces to a single value
+        if len(omega) == 1:
+            sign = -1.0 if mu == 0 else 1.0
+            lamb = 0.5 * omega[0] + sign * np.sqrt(0.25 * omega[0] ** 2 + f_squared[0])
+            return lamb
+
         def target(x):
             return np.sum(f_squared / (x - omega)) - x
 
@@ -244,7 +250,7 @@ class RFO(InternalCoordinatesOptimizer):
                 b = min(min(b, omega_mu - num_eps), 0.0)
             else:
                 a = max(a, num_eps)
-                b = max(max(b, omega_mu + num_eps), 0.0)
+                b = max(max(b, omega_mu + num_eps), a + num_eps)
         try:
             lamb, result = brentq(target, a, b, full_output=True)
         except ValueError as m:
