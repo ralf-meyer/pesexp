@@ -245,12 +245,13 @@ class RFO(InternalCoordinatesOptimizer):
             b = 0.5 * omega_mu + sign * np.sqrt(
                 0.25 * omega_mu**2 + 0.5 * f_squared[0]
             )
-            if sign == -1.0:
-                a = min(a, -num_eps)
-                b = min(min(b, omega_mu - num_eps), 0.0)
-            else:
-                a = max(a, num_eps)
-                b = max(max(b, omega_mu + num_eps), a + num_eps)
+            if np.sign(target(a)) == np.sign(target(b)):
+                if sign == -1.0:
+                    a = min(a, -num_eps)
+                    b = min(min(b, omega_mu - num_eps), 0.0)
+                else:
+                    a = max(a, num_eps)
+                    b = max(max(b, omega_mu + num_eps), a + num_eps)
         try:
             lamb, result = brentq(target, a, b, full_output=True)
         except ValueError as m:

@@ -3,7 +3,7 @@ from ase.atoms import Atoms
 from pesexp.optimizers import RFO
 
 
-def test_calc_shift_parameter_fail1():
+def test_calc_shift_parameter_baker09_1():
     """Previously failed run (in baker system 09)"""
     opt = RFO(Atoms())
     mu = 0
@@ -102,7 +102,106 @@ def test_calc_shift_parameter_fail1():
     assert abs(shift - ref) < 1e-5
 
 
-def test_calc_shift_parameter_fail2():
+def test_calc_shift_parameter_baker09_2():
+    """Previously failed run (in baker system 09)"""
+    opt = RFO(Atoms())
+    mu = 0
+    f_trans = np.array(
+        [
+            -4.98587374e-09,
+            6.83299550e-09,
+            7.25540051e-02,
+            -1.89599173e-01,
+            -5.61167802e-10,
+            -2.86372902e-09,
+            -7.47304780e-02,
+            -1.45636319e-09,
+            3.52321996e-02,
+            5.02186719e-09,
+            4.50223568e-02,
+            -1.12921385e-01,
+            -1.69593634e-01,
+            -1.63503922e-09,
+            -1.02615733e-01,
+            -9.29002497e-02,
+            -2.76625404e-09,
+            9.20788230e-02,
+            -2.61009260e-09,
+            1.39931439e-02,
+            9.81943066e-11,
+            8.32911149e-10,
+            6.79629396e-10,
+            -1.72235021e-01,
+            -1.60213407e-09,
+            5.72039240e-01,
+            3.02099420e-09,
+            -1.32015807e-01,
+            -2.49875927e-09,
+            -5.49100653e-09,
+            3.88177504e-01,
+            7.27099999e-10,
+            -7.24221033e-01,
+            4.33696182e-09,
+            7.00488683e-02,
+            -7.62774602e-09,
+            9.43431236e-01,
+            -3.96126164e-01,
+            1.27254789e-09,
+            -3.88577751e-01,
+            8.79305157e-09,
+        ]
+    )
+    omega = np.array(
+        [
+            -1.38915854e-01,
+            6.41664043e-01,
+            1.36585225e00,
+            1.90058734e00,
+            2.90270581e00,
+            3.12529275e00,
+            3.32022109e00,
+            3.57539033e00,
+            3.91895067e00,
+            4.80687342e00,
+            5.01908700e00,
+            5.76908283e00,
+            6.06934852e00,
+            7.15672276e00,
+            7.82720138e00,
+            8.41041299e00,
+            8.44245196e00,
+            9.44290024e00,
+            1.03322897e01,
+            1.38927234e01,
+            1.45515217e01,
+            1.57474795e01,
+            1.64242099e01,
+            1.83551908e01,
+            1.92985090e01,
+            2.30249538e01,
+            2.78104878e01,
+            2.91819558e01,
+            3.11896977e01,
+            3.85245278e01,
+            4.59225138e01,
+            5.36886388e01,
+            6.97777838e01,
+            7.37464558e01,
+            7.57251962e01,
+            9.79243588e01,
+            1.02584034e02,
+            1.03632558e02,
+            1.07533774e02,
+            1.25240083e02,
+            1.41082404e02,
+        ]
+    )
+    shift = opt.calc_shift_parameter(f_trans, omega, mu)
+    ref = -0.138916
+    assert abs(shift - ref) < 1e-5
+
+
+def test_calc_shift_parameter_baker10_1():
     """Previously failed run (in baker system 10)"""
     opt = RFO(Atoms())
     mu = 1
@@ -113,7 +212,7 @@ def test_calc_shift_parameter_fail2():
     assert abs(shift - ref) < 1e-5
 
 
-def test_calc_shift_parameter_fail3():
+def test_calc_shift_parameter_baker10_2():
     """Previously failed run (in baker system 10)"""
     opt = RFO(Atoms())
     mu = 1
