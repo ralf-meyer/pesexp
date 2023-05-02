@@ -236,22 +236,35 @@ class RFO(InternalCoordinatesOptimizer):
             # First figure out if we are maximizing or minimizing (to select the correct
             # reference eigenvalue and solution of a quadratic equation):
             sign = -1.0 if mu == 0 else 1.0
-            omega_mu = omega[0] if mu == 0 else omega[-1]
             # If all eigenvalues omega are degenerate omega[i] = omega_mu:
-            a = 0.5 * omega_mu + sign * np.sqrt(
-                0.25 * omega_mu**2 + 2 * f_squared.sum()
-            )
-            # Solution for single eigenvalue omega
-            b = 0.5 * omega_mu + sign * np.sqrt(
-                0.25 * omega_mu**2 + 0.5 * f_squared[0]
-            )
-            if np.sign(target(a)) == np.sign(target(b)):
-                if sign == -1.0:
-                    a = min(a, -num_eps)
-                    b = min(min(b, omega_mu - num_eps), 0.0)
-                else:
-                    a = max(a, num_eps)
-                    b = max(max(b, omega_mu + num_eps), a + num_eps)
+            if mu == 0:  # Minimization
+                a = 0.5 * omega[0] - np.sqrt(0.25 * omega[0] ** 2 + 2 * f_squared.sum())
+                assert target(a) > 0
+                b = 0.5 * (a + omega[0])
+                # bisection search for b until the sign flips:
+                for _ in range(100):
+                    target_b = target(b)
+                    if target_b < 0:
+                        break
+                    elif not np.isfinite(target_b):
+                        logger.debug("Bisection search hit infinite value")
+                        return a
+                    a = b
+                    b = 0.5 * (a + omega[0])
+            else:  # Maximization
+                b = 0.5 * omega[-1] + np.sqrt(0.25 * omega[-1] ** 2 + 2 * f_squared[-1])
+                assert target(b) < 0
+                a = 0.5 * (b + omega[-1])
+                # bisection search for a until the sign flips:
+                for _ in range(100):
+                    target_a = target(a)
+                    if target_a > 0:
+                        break
+                    elif not np.isfinite(target_a):
+                        logger.debug("Bisection search hit infinite value")
+                        return b
+                    b = a
+                    a = 0.5 * (b + omega[-1])
         try:
             lamb, result = brentq(target, a, b, full_output=True)
         except ValueError as m:
