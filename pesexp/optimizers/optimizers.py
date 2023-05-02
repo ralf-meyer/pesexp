@@ -204,6 +204,9 @@ class RFO(InternalCoordinatesOptimizer):
         # as Newtons method because of the discontinuities in the target function
         # and because it allows to ensure the bracketing property.
 
+        # Numerical threshold to avoid divisions by zero etc.
+        num_eps = 1e-10
+
         f_squared = f_trans**2
 
         def target(x):
@@ -214,8 +217,8 @@ class RFO(InternalCoordinatesOptimizer):
             # Solutions need to satisfy the bracketing property:
             # TODO: I would prefer an estimation that does not rely on arbitrary
             # numerical thresholds.
-            a = omega[mu - 1] + 1e-10
-            b = omega[mu] - 1e-10
+            a = omega[mu - 1] + num_eps
+            b = omega[mu] - num_eps
         else:
             # Since the second part of the bracket in this case is +- inf a different
             # approach is needed. The actual solution will always be bracketed by two
@@ -237,11 +240,11 @@ class RFO(InternalCoordinatesOptimizer):
                 0.25 * omega_mu**2 + 0.5 * f_squared[0]
             )
             if sign == -1.0:
-                a = min(a, -1e-6)
-                b = min(b, 0.0)
+                a = min(a, -num_eps)
+                b = min(min(b, omega_mu - num_eps), 0.0)
             else:
-                a = max(a, 1e-6)
-                b = max(b, 0.0)
+                a = max(a, num_eps)
+                b = max(max(b, omega_mu + num_eps), 0.0)
         try:
             lamb, result = brentq(target, a, b, full_output=True)
         except ValueError as m:
