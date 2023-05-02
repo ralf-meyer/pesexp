@@ -36,7 +36,6 @@ class InternalCoordinatesOptimizer(ase.optimize.optimize.Optimizer):
         maxstep=None,
         maxstep_internal=None,
     ):
-
         if coordinate_set is None:
             self.coord_set = CartesianCoordinates(atoms)
         else:
@@ -246,8 +245,9 @@ class RFO(InternalCoordinatesOptimizer):
         try:
             lamb, result = brentq(target, a, b, full_output=True)
         except ValueError as m:
+            logger.error(f"{a} {b} {target(a)} {target(b)} {f_squared.sum()} {mu}")
+            logger.error(f_trans)
             logger.error(omega)
-            logger.error(f"{a} {b} {target(a)} {target(b)} {f_squared.sum()}")
             raise m
 
         if not result.converged:
