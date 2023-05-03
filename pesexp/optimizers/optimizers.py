@@ -204,9 +204,6 @@ class RFO(InternalCoordinatesOptimizer):
         # as Newtons method because of the discontinuities in the target function
         # and because it allows to ensure the bracketing property.
 
-        # Numerical threshold to avoid divisions by zero etc.
-        num_eps = 1e-10
-
         f_squared = f_trans**2
 
         # Analytical solution for eq. (13) if the sum reduces to a single value
@@ -215,56 +212,58 @@ class RFO(InternalCoordinatesOptimizer):
             lamb = 0.5 * omega[0] + sign * np.sqrt(0.25 * omega[0] ** 2 + f_squared[0])
             return lamb
 
+        # Define the target function i.e. eq. (13)
         def target(x):
             return np.sum(f_squared / (x - omega)) - x
 
         # Find the correct interval based on the value of mu
         if 0 < mu < len(omega):
             # Solutions need to satisfy the bracketing property:
-            # TODO: I would prefer an estimation that does not rely on arbitrary
-            # numerical thresholds.
-            a = omega[mu - 1] + num_eps
-            b = omega[mu] - num_eps
+            a = omega[mu - 1]
+            b = omega[mu]
         else:
             # Since the second part of the bracket in this case is +- inf a different
-            # approach is needed. The actual solution will always be bracketed by two
-            # limiting cases: The case where all omegas are degenerate will yield the
-            # largest magnitude shift parameter, while the case of a single eigenvalue
-            # yields the smallest magnitude shift parameter. Note, as additional safety
-            # factor to avoid numerical problems, these limits are calculated using the
-            # a different slope for the r.h.s of 2 and 1/2, respectively.
+            # approach to find initial values for a and b is needed. The case where all
+            # omegas are degenerate will yield the largest magnitude shift parameter.
+            # Note, as additional safety factor to avoid numerical problems, this limit
+            # is calculated using a different slope for 2 the r.h.s of the equation.
             # First figure out if we are maximizing or minimizing (to select the correct
             # reference eigenvalue and solution of a quadratic equation):
-            sign = -1.0 if mu == 0 else 1.0
-            # If all eigenvalues omega are degenerate omega[i] = omega_mu:
             if mu == 0:  # Minimization
                 a = 0.5 * omega[0] - np.sqrt(0.25 * omega[0] ** 2 + 2 * f_squared.sum())
                 assert target(a) > 0
-                b = 0.5 * (a + omega[0])
-                # bisection search for b until the sign flips:
-                for _ in range(100):
-                    target_b = target(b)
-                    if target_b < 0:
-                        break
-                    elif not np.isfinite(target_b):
-                        logger.debug("Bisection search hit infinite value")
-                        return a
-                    a = b
-                    b = 0.5 * (a + omega[0])
+                b = omega[0]
             else:  # Maximization
+                a = omega[-1]
                 b = 0.5 * omega[-1] + np.sqrt(0.25 * omega[-1] ** 2 + 2 * f_squared[-1])
                 assert target(b) < 0
-                a = 0.5 * (b + omega[-1])
-                # bisection search for a until the sign flips:
-                for _ in range(100):
-                    target_a = target(a)
-                    if target_a > 0:
-                        break
-                    elif not np.isfinite(target_a):
-                        logger.debug("Bisection search hit infinite value")
-                        return b
-                    b = a
-                    a = 0.5 * (b + omega[-1])
+
+        # bisection search until both a and b have been updated (to ensure that the
+        # value of the target function is finite). Note this only work for this specific
+        # target function where the function is monotonically decresing in every
+        # possible interval (a, b).
+        def bisection_search(fun, a, b):
+            last_updated = "None"
+            for _ in range(100):
+                x = 0.5 * (a + b)
+                fun_x = fun(x)
+                if not np.isfinite(fun_x):
+                    raise ValueError("Bisection search stuck on infinite value")
+                if fun_x > 0:  # Update a
+                    a = x
+                    if last_updated == "b":
+                        return a, b
+                    last_updated = "a"
+                else:  # Update b
+                    b = x
+                    if last_updated == "a":
+                        return a, b
+                    last_updated = "b"
+            raise ConvergenceError(
+                "Bisection search not converged within 100 iterations"
+            )
+
+        a, b = bisection_search(target, a, b)
         try:
             lamb, result = brentq(target, a, b, full_output=True)
         except ValueError as m:
