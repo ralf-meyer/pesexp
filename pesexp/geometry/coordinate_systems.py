@@ -248,6 +248,8 @@ class ApproximateNormalCoordinates(CoordinateSystem):
                     + self.weighting[0]
                 )
             )
+        elif isinstance(self.weighting, float):
+            weights = self.weighting * np.ones_like(w[mask])
         else:
             raise NotImplementedError(f"Unknown weighting method {self.weighting}")
         self.B = np.transpose(v[:, mask] * weights).copy()
