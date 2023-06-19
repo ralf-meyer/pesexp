@@ -3,7 +3,8 @@ import logging
 from pesexp.utils.io import read_terachem_input
 from pesexp.cli.params import parse_opt_args
 from pesexp.geometry.coordinate_systems import get_coordinate_system
-from pesexp.hessians.hessian_guesses import get_hessian_guess, filter_hessian
+from pesexp.hessians.hessian_guesses import get_hessian_guess
+from pesexp.hessians.hessian_tools import filter_hessian
 from pesexp.hessians.hessian_approximations import ForcedDeterminantBFGSHessian
 from pesexp.optimizers.optimizers import RFO
 from pesexp.optimizers.convergence import terachem_convergence
@@ -28,7 +29,6 @@ def run_optimization(
     hessian_thresh=None,
     name="pesexp",
 ):
-
     # Update the settings in the Terachem calculator to match geomeTRIC:
     atoms.calc = update_terachem_settings(atoms.calc)
 

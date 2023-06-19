@@ -9,9 +9,8 @@ import numdifftools as nd
 import geometric.internal
 from utils import g2_molecules, xtb_installed
 from pesexp.calculators import _openbabel_methods, get_calculator
+from pesexp.hessians.hessian_tools import project_hessian
 from pesexp.hessians.hessian_guesses import (
-    filter_hessian,
-    project_hessian,
     get_hessian_guess,
     numerical_hessian,
     TrivialGuessHessian,
@@ -97,7 +96,13 @@ def test_numerical_hessian_EMT(system, diff_method):
 
 
 @xtb_installed
-@pytest.mark.parametrize("system", ["H2", "LiF"])
+@pytest.mark.parametrize(
+    "system",
+    [
+        "H2",
+        "LiF",  # "H2O", "C3H8"
+    ],
+)
 def test_xtb_hessian(system):
     """TODO: For some reason I can not get this test to pass for any
     non-dimer molecules. Maybe due to the way the singlepoint calculations are
@@ -107,15 +112,19 @@ def test_xtb_hessian(system):
     atoms.rotate(15, (1, 0, 0))
     x0 = atoms.get_positions()
     H = get_hessian_guess(atoms, "xtb")
+    # H = project_hessian(H, atoms)
+
     np.testing.assert_allclose(atoms.get_positions(), x0)
     np.testing.assert_allclose(H, H.T, atol=1e-8)
     xtb_ase_calc = pytest.importorskip("xtb.ase.calculator")
     atoms.calc = xtb_ase_calc.XTB(method="GFN2-xTB", accuracy=0.3)
-    H_ref = numerical_hessian(atoms, step=0.005 * ase.units.Bohr)
+    H_num = numerical_hessian(atoms, step=0.005 * ase.units.Bohr)
+    # H_num = project_hessian(H_num, atoms)
+
     eig, _ = np.linalg.eigh(H)
-    eig_ref, _ = np.linalg.eigh(H_ref)
-    np.testing.assert_allclose(eig, eig_ref, atol=1e-2)
-    np.testing.assert_allclose(H, H_ref, atol=1e-2)
+    eig_num, _ = np.linalg.eigh(H_num)
+    np.testing.assert_allclose(eig, eig_num, atol=1e-2)
+    np.testing.assert_allclose(H, H_num, atol=1e-2)
 
 
 @pytest.mark.skip(
@@ -220,30 +229,3 @@ def test_internal_coordinate_based_hessians(name, method, atol=1e-10):
     vals[indices] = 0.1
     # Assert that the remaining eigenvalues are positive
     np.testing.assert_array_less(np.zeros_like(vals), vals)
-
-
-def test_filter_hessian():
-    H = np.diag([-1.0, 0.0, 1.0, 2.0, 3.0, 4.0])
-    H = filter_hessian(H, thresh=1.1e-5)
-    np.testing.assert_allclose(H, np.diag([1.1e-5, 1.1e-5, 1.0, 2.0, 3.0, 4.0]))
-
-    # Build random matrix with eigenvalue above 0.1
-    A = np.array(
-        [
-            [0.7432, 0.4965, 0.2700, 0.0742, -0.0800, -0.1814],
-            [0.4965, 1.0133, 0.5708, 0.1900, -0.1071, -0.2977],
-            [0.2700, 0.5708, 0.9332, 0.3893, -0.0277, -0.2830],
-            [0.0742, 0.1900, 0.3893, 0.7155, 0.2134, -0.0696],
-            [-0.0800, -0.1071, -0.0277, 0.2134, 0.6736, 0.4129],
-            [-0.1814, -0.2977, -0.2830, -0.0696, 0.4129, 1.2388],
-        ]
-    )
-    A_ref = A.copy()
-    A = filter_hessian(A)
-    # Test that it remained unaltered
-    np.testing.assert_allclose(A, A_ref)
-    # Increase the threshold to 1.0
-    A = filter_hessian(A, thresh=1.0)
-    vals, _ = np.linalg.eigh(A)
-    # Test that the smaller eigenvalues have been filtered correctly
-    np.testing.assert_allclose(vals, [1.0, 1.0, 1.0, 1.0, 1.27649882, 2.20586986])
