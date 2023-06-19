@@ -121,3 +121,26 @@ def read_orca_hessian(hessian_file):
     # Convert from Hartee / Bohr^2 to eV / Ang^2
     H *= ase.units.Hartree / ase.units.Bohr**2
     return H
+
+
+def read_orca_frequencies(orca_output):
+    with open(orca_output, "r") as fin:
+        lines = fin.readlines()
+
+    line_iter = iter(lines)
+    for line in line_iter:
+        if line.startswith("VIBRATIONAL FREQUENCIES"):
+            # Skip 4 lines:
+            for _ in range(4):
+                line = next(line_iter)
+            # Parse lines until we hit a blank line:
+            frequencies = []
+            for line in line_iter:
+                if not line.strip():
+                    break
+                frequencies.append(float(line.split()[1]))
+
+    frequencies = np.array(frequencies) * ase.units.invcm
+    # TODO Implement for modes
+    modes = None
+    return frequencies, modes

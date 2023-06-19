@@ -41,6 +41,7 @@ def project_hessian(H, atoms, remove_translation=True, remove_rotation=True):
     n_atoms = len(atoms)
     xyzs = atoms.get_positions()
     masses = atoms.get_masses()
+    mass_matrix = np.outer(np.repeat(np.sqrt(masses), 3), np.repeat(np.sqrt(masses), 3))
 
     # Initialized as zeros since that corresponds to the B matrix of a constant
     # internal coordinate (in case a coordinate is not evaluated)
@@ -89,4 +90,6 @@ def project_hessian(H, atoms, remove_translation=True, remove_rotation=True):
     P = np.eye(3 * n_atoms) - B_ext.T @ B_ext
 
     # No transpostions here since P is symmetry anyway
-    return P @ H @ P
+    # TODO: simplify this because I think that transforming from to a
+    # mass weighted Hessian and back immediately after is confusing
+    return (P @ (H / mass_matrix) @ P) * mass_matrix

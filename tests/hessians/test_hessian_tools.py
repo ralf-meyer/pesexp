@@ -1,5 +1,9 @@
+import pytest
 import numpy as np
-from pesexp.hessians.hessian_tools import filter_hessian
+import ase.units as units
+from ase.io import read
+from pesexp.hessians.hessian_tools import filter_hessian, project_hessian
+from pesexp.utils.io import read_orca_hessian, read_orca_frequencies
 
 
 def test_filter_hessian():
@@ -27,3 +31,28 @@ def test_filter_hessian():
     vals, _ = np.linalg.eigh(A)
     # Test that the smaller eigenvalues have been filtered correctly
     np.testing.assert_allclose(vals, [1.0, 1.0, 1.0, 1.0, 1.27649882, 2.20586986])
+
+
+@pytest.mark.parametrize("basename", ["baker_01", "baker_09"])
+def test_project_hessian_baker_01(resource_path_root, basename, atol=1e-2, rtol=1e-3):
+    atoms = read(resource_path_root / "hessians" / f"{basename}.xyz")
+    H = read_orca_hessian(resource_path_root / "hessians" / f"{basename}_orca.hess")
+
+    # The calculation of energies and eigenmodes is taken from
+    # ase.vibrations.VibrationData._energies_and_modes()
+    masses = atoms.get_masses()
+    mass_weights = np.repeat(masses**-0.5, 3)
+    unit_conversion = units._hbar * units.m / np.sqrt(units._e * units._amu)
+
+    H_proj = project_hessian(H, atoms)
+    eigs, _ = np.linalg.eigh(H_proj * np.outer(mass_weights, mass_weights))
+    frequencies = unit_conversion * np.sign(eigs) * np.sqrt(abs(eigs))
+
+    # From the orca.out file in eV
+    frequencies_ref, _ = read_orca_frequencies(
+        resource_path_root / "hessians" / f"{basename}_orca.out"
+    )
+    # Sort because in orca.out zeros come before negative frequencies
+    frequencies_ref = np.sort(frequencies_ref)
+
+    np.testing.assert_allclose(frequencies, frequencies_ref, rtol=rtol, atol=atol)
