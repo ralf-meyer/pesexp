@@ -34,7 +34,9 @@ def test_filter_hessian():
 
 
 @pytest.mark.parametrize("basename", ["baker_01", "baker_09"])
-def test_project_hessian_baker_01(resource_path_root, basename, atol=1e-2, rtol=1e-3):
+def test_project_hessian_baker_systems(
+    resource_path_root, basename, atol=1e-2, rtol=1e-3
+):
     atoms = read(resource_path_root / "hessians" / f"{basename}.xyz")
     H = read_orca_hessian(resource_path_root / "hessians" / f"{basename}_orca.hess")
 

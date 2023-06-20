@@ -41,12 +41,15 @@ def project_hessian(H, atoms, remove_translation=True, remove_rotation=True):
     n_atoms = len(atoms)
     xyzs = atoms.get_positions()
     masses = atoms.get_masses()
-    mass_matrix = np.outer(np.repeat(np.sqrt(masses), 3), np.repeat(np.sqrt(masses), 3))
+    mass_vector = np.repeat(np.sqrt(masses), 3)
+    mass_matrix = np.outer(mass_vector, mass_vector)
 
     # Initialized as zeros since that corresponds to the B matrix of a constant
     # internal coordinate (in case a coordinate is not evaluated)
     B_ext = np.zeros((6, 3 * n_atoms))
 
+    # First 3 coordinates are the center of mass coordinates. Their derivative
+    # with respect to (mass-weighted) Cartesian coordinates is constant.
     if remove_translation:
         for i in range(3):
             B_ext[i, i::3] = 1.0
@@ -66,7 +69,7 @@ def project_hessian(H, atoms, remove_translation=True, remove_rotation=True):
                 B_ext[3 + i, 3 * i_at : 3 * i_at + 3] = vec
 
     # Mass scaling
-    B_ext *= np.repeat(np.sqrt(masses), 3)[np.newaxis, :]
+    B_ext *= mass_vector[np.newaxis, :]
 
     # The xtb implementation uses an interesting trick to construct
     # the Wilson B matrix for the internal coordinates B_int.
@@ -89,7 +92,6 @@ def project_hessian(H, atoms, remove_translation=True, remove_rotation=True):
     # without explicitly building a set of internal coordinates:
     P = np.eye(3 * n_atoms) - B_ext.T @ B_ext
 
-    # No transpostions here since P is symmetry anyway
     # TODO: simplify this because I think that transforming from to a
     # mass weighted Hessian and back immediately after is confusing
-    return (P @ (H / mass_matrix) @ P) * mass_matrix
+    return (P @ (H / mass_matrix) @ P.T) * mass_matrix
