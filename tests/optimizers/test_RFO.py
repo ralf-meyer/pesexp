@@ -1,6 +1,113 @@
+import pytest
 import numpy as np
+from scipy.linalg import eigh
 from ase.atoms import Atoms
 from pesexp.optimizers import RFO
+from pesexp.geometry.coordinate_systems import ApproximateNormalCoordinates
+
+
+@pytest.mark.parametrize("s", [1.0, 0.5, 2.0])
+def test_RFO_step_calculations(s):
+    opt = RFO(Atoms(), s=s)
+    # Based on the third step in a Baker system 01 optimization
+    H = np.array(
+        [
+            [-10.75201976, -6.42166332, 5.57618174],
+            [-6.42166332, 8.23167565, 14.23864386],
+            [5.57618174, 14.23864386, 283.73471308],
+        ]
+    )
+    omega, V = np.linalg.eigh(H)
+    f = np.array([-1.04432943, 1.98562983, 1.97730308])
+
+    opt.H = H
+    H_ext = np.zeros((len(f) + 1, len(f) + 1))
+    H_ext[: len(f), : len(f)] = H
+    H_ext[:-1, -1] = -f
+    H_ext[-1, :-1] = -f
+    S = s * np.eye(len(f))
+    S_ext = np.zeros_like(H_ext)
+    S_ext[:-1, :-1] = S
+    S_ext[-1, -1] = 1
+    # Equation (6) in Baker 1986
+    vals, vecs = eigh(H_ext, S_ext)
+
+    for mu in range(0, len(f) + 1):
+        np.testing.assert_allclose(
+            opt.calc_shift_parameter(np.dot(f, V), omega, mu), vals[mu], atol=1e-6
+        )
+
+        opt.mu = mu
+        step = opt.internal_step(f)
+        step_ref = vecs[:-1, mu] / vecs[-1, mu]
+
+        np.testing.assert_allclose(step, step_ref, atol=1e-6)
+
+
+@pytest.mark.parametrize(
+    ["s_update", "reference"],
+    [("nr_scalar", 90.7264245), ("nr_vector", [1317.383826, 97.993153, 17160.815268])],
+)
+def test_s_update_methods(s_update, reference):
+    atoms = Atoms(
+        ["C", "N", "H"],
+        [
+            [0.00000, 0.00000, 0.00000],
+            [1.14838, 0.00000, 0.00000],
+            [1.14838, 0.00000, 1.58536],
+        ],
+    )
+    V = np.array(
+        [
+            [0.0861, 0.0, 0.2461, 0.0923, 0.0, -0.7794, -0.1783, 0.0, 0.5332],
+            [-0.2277, 0.0, -0.6137, -0.2168, 0.0, 0.0437, 0.4446, 0.0, 0.57],
+            [-0.7058, 0.0, 0.0036, 0.7084, 0.0, 0.0031, -0.0026, 0.0, -0.0067],
+        ]
+    )
+    coord_set = ApproximateNormalCoordinates(atoms)
+    coord_set.BTinv = V
+    # Based on the third step in a Baker system 01 optimization
+    H = np.array(
+        [
+            [-9.00694082, 10.75415352, 16.01601457],
+            [10.75415352, 11.08937814, -30.0838256],
+            [16.01601457, -30.0838256, 282.12316583],
+        ]
+    )
+    omega, V = np.linalg.eigh(H)
+    f0 = np.array(
+        [
+            [1.47218388, 0.0, 1.33021951],
+            [-0.71917117, -0.0, 2.05629584],
+            [-0.7530127, 0.0, -3.38651534],
+        ]
+    )
+    r0 = np.array(
+        [
+            [7.99898402e-02, 0.0, 2.25904716e-01],
+            [1.23202773e00, 0.0, -1.15761055e-01],
+            [9.84742430e-01, 0.0, 1.47521634e00],
+        ]
+    )
+    f = np.array(
+        [
+            [1.74939786, -0.0, 0.09690256],
+            [-1.42186529, 0.0, 0.9253995],
+            [-0.32753257, 0.0, -1.02230206],
+        ]
+    )
+    r = np.array(
+        [
+            [1.28050270e-01, 0.0, 3.27413744e-01],
+            [1.25749693e00, 0.0, -7.65719671e-02],
+            [9.11212798e-01, 0.0, 1.33451822e00],
+        ]
+    )
+
+    opt = RFO(atoms, coord_set, s_update=s_update)
+    opt.H = H
+    opt.update_S_matrix(r, f, r0, f0)
+    np.testing.assert_allclose(opt.s, reference)
 
 
 def test_calc_shift_parameter_baker09_1():
@@ -198,6 +305,105 @@ def test_calc_shift_parameter_baker09_2():
     )
     shift = opt.calc_shift_parameter(f_trans, omega, mu)
     ref = -0.138916
+    assert abs(shift - ref) < 1e-5
+
+
+def test_calc_shift_parameter_baker09_3():
+    """Previously failed run (in baker system 09)"""
+    opt = RFO(Atoms())
+    mu = 0
+    f_trans = np.array(
+        [
+            4.22618270e-10,
+            2.20203350e-10,
+            3.06436497e-02,
+            2.44336088e-01,
+            4.48424234e-11,
+            1.01525981e-10,
+            3.01598995e-01,
+            6.78262504e-12,
+            -1.44819985e-01,
+            2.46897300e-01,
+            -4.96595344e-11,
+            1.84284387e-01,
+            3.49770126e-01,
+            9.48845727e-12,
+            -8.64736938e-02,
+            -4.56742658e-11,
+            3.47341871e-01,
+            2.68835108e-11,
+            -1.15097027e00,
+            -5.17647956e-01,
+            -1.19544820e-11,
+            -2.85069975e-12,
+            -4.22560361e-12,
+            -4.98101484e-02,
+            -6.02385417e-12,
+            7.45664523e-01,
+            -1.25413482e-11,
+            -1.48132639e-01,
+            1.66263431e-12,
+            -4.01748416e-12,
+            -1.78103202e-01,
+            3.01432483e-12,
+            1.45985837e-01,
+            -6.70007310e-12,
+            -1.15311742e-01,
+            1.34600099e-11,
+            -9.64986130e-02,
+            -1.79596037e-01,
+            2.93353211e-12,
+            9.96367936e-03,
+            -8.98757330e-12,
+        ]
+    )
+    omega = np.array(
+        [
+            -2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+            2.0,
+        ]
+    )
+    shift = opt.calc_shift_parameter(f_trans, omega, mu)
+    ref = -2.0
     assert abs(shift - ref) < 1e-5
 
 
