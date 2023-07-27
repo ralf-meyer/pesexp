@@ -111,7 +111,7 @@ def test_xtb_hessian(system):
     atoms = ase.build.molecule(system)
     atoms.rotate(15, (1, 0, 0))
     x0 = atoms.get_positions()
-    H = get_hessian_guess(atoms, "xtb")
+    H = get_hessian_guess(atoms, "GFN2-xTB")
     # H = project_hessian(H, atoms)
 
     np.testing.assert_allclose(atoms.get_positions(), x0)

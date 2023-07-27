@@ -7,7 +7,7 @@ from .calculators import (
     LEPSPotential,
 )
 
-_xtb_methods = ["xtb"]
+_xtb_methods = ["xtb", "gfn2-xtb"]
 _openbabel_methods = ["uff", "mmff94", "gaff"]
 
 

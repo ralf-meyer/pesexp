@@ -450,11 +450,24 @@ class LindhHessian:
             return 0.28, 3.4
 
 
-def xtb_hessian(atoms, method):
+def xtb_hessian(atoms, method=None):
+    if method is not None:
+        from xtb.utils import get_method
+
+        method = get_method(method)
+        if method is None:
+            raise NotImplementedError("Unknown xtb method.")
     with tempfile.TemporaryDirectory() as tmpdir:
         # Write .xyz file
         ase.io.write(os.path.join(tmpdir, "tmp.xyz"), atoms, plain=True)
+        charge = int(atoms.get_initial_charges().sum())
+        spin = int(atoms.get_initial_magnetic_moments().sum().round())
         with open(os.path.join(tmpdir, "xtb.inp"), "w") as fout:
+            fout.write(f"$chrg {charge}\n")
+            fout.write(f"$spin {spin}\n")
+            if method is not None:
+                fout.write("$gfn\n")
+                fout.write(f"  method={method}\n")
             fout.write("$symmetry\n")
             fout.write("  maxat=0\n")
             fout.write("$end\n")
