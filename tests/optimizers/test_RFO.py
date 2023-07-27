@@ -34,10 +34,15 @@ def test_RFO_step_calculations(s):
 
     for mu in range(0, len(f) + 1):
         np.testing.assert_allclose(
-            opt.calc_shift_parameter(np.dot(f, V), omega, mu), vals[mu], atol=1e-6
+            opt.calc_shift_parameter(
+                np.dot(f, V), omega, s * np.ones_like(omega), root=mu
+            ),
+            vals[mu],
+            atol=1e-6,
         )
 
         opt.mu = mu
+        opt.s = s * np.ones_like(omega)
         step = opt.internal_step(f)
         step_ref = vecs[:-1, mu] / vecs[-1, mu]
 
@@ -204,7 +209,7 @@ def test_calc_shift_parameter_baker09_1():
             1.41082404e02,
         ]
     )
-    shift = opt.calc_shift_parameter(f_trans, omega, mu)
+    shift = opt.calc_shift_parameter(f_trans, omega, 1.0, mu)
     ref = -4.28947
     assert abs(shift - ref) < 1e-5
 
@@ -303,7 +308,7 @@ def test_calc_shift_parameter_baker09_2():
             1.41082404e02,
         ]
     )
-    shift = opt.calc_shift_parameter(f_trans, omega, mu)
+    shift = opt.calc_shift_parameter(f_trans, omega, 1.0, mu)
     ref = -0.138916
     assert abs(shift - ref) < 1e-5
 
@@ -402,7 +407,7 @@ def test_calc_shift_parameter_baker09_3():
             2.0,
         ]
     )
-    shift = opt.calc_shift_parameter(f_trans, omega, mu)
+    shift = opt.calc_shift_parameter(f_trans, omega, 1.0, mu)
     ref = -2.0
     assert abs(shift - ref) < 1e-5
 
@@ -413,7 +418,7 @@ def test_calc_shift_parameter_baker10_1():
     mu = 1
     f_trans = np.array([-1.76696862e-13])
     omega = np.array([0.72761467])
-    shift = opt.calc_shift_parameter(f_trans, omega, mu)
+    shift = opt.calc_shift_parameter(f_trans, omega, 1.0, mu)
     ref = 0.72761
     assert abs(shift - ref) < 1e-5
 
@@ -424,6 +429,6 @@ def test_calc_shift_parameter_baker10_2():
     mu = 1
     f_trans = np.array([1.03235612e-08])
     omega = np.array([0.72736632])
-    shift = opt.calc_shift_parameter(f_trans, omega, mu)
+    shift = opt.calc_shift_parameter(f_trans, omega, 1.0, mu)
     ref = 0.72737
     assert abs(shift - ref) < 1e-5
