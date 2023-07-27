@@ -100,15 +100,103 @@ class ForcedDeterminantBFGSHessian(HessianApproximation):
 
 
 class TSBFGSHessian(HessianApproximation):
+    """This follows the definition in
+    Bofill, International Journal of Quantum Chemistry, Vol 94, 324-332 (2003)
+    """
+
     def deltaH(self, dx, dg):
         s = dg - np.dot(self, dx)
         vals, vecs = np.linalg.eigh(self)
-        abs_B = np.einsum("im,m,jm->ij", vecs, np.abs(vals), vecs)
+        abs_B = np.einsum("ik,k,jk->ij", vecs, np.abs(vals), vecs)
         abs_B_dx = np.dot(abs_B, dx)
         u = np.dot(dx, dg) * dg + np.dot(dx, abs_B_dx) * abs_B_dx
         u /= np.dot(dx, dg) ** 2 + np.dot(dx, abs_B_dx) ** 2
         su = np.outer(s, u)
         return (su + su.T) - np.dot(s, dx) * np.outer(u, u)
+
+
+class TSBFGSHessian2(HessianApproximation):
+    """Alternative definition"""
+
+    def deltaH(self, dx, dg):
+        s = dg - np.dot(self, dx)
+        vals, vecs = np.linalg.eigh(self)
+        abs_B = np.einsum("ik,k,jk->ij", vecs, np.abs(vals), vecs)
+        abs_B_dx = np.dot(abs_B, dx)
+        u = np.dot(dx, dg) * dg + np.dot(dx, abs_B_dx) * abs_B_dx
+        u /= np.dot(dx, dg) ** 2 + np.dot(dx, abs_B_dx) ** 2
+        su = np.outer(s, u)
+        return (su + su.T) - np.dot(s, dx) * np.outer(u, u)
+
+
+class PartitionedBFGS(HessianApproximation):
+    def deltaH(self, dx, dg):
+        vals, vecs = np.linalg.eigh(self)
+        dx_max = dx @ vecs[:, :1]
+        dg_max = dg @ vecs[:, :1]
+        B_max = vecs[:, :1].T @ self @ vecs[:, :1]
+        logger.debug(
+            f"d_max = {dx_max @ dg_max:.2E}, b_max = {dx_max @ B_max @ dx_max:.2E}"
+        )
+        v_max = np.dot(B_max, dx_max)
+        delta_max = np.outer(dg_max, dg_max) / np.dot(dx_max, dg_max) - np.outer(
+            v_max, v_max
+        ) / np.dot(dx_max, v_max)
+        delta_max = vecs[:, :1] @ delta_max @ vecs[:, :1].T
+
+        dx_min = dx @ vecs[:, 1:]
+        dg_min = dg @ vecs[:, 1:]
+        v_min = np.dot(vecs[:, 1:].T @ self @ vecs[:, 1:], dx_min)
+        delta_min = np.outer(dg_min, dg_min) / np.dot(dx_min, dg_min) - np.outer(
+            v_min, v_min
+        ) / np.dot(dx_min, v_min)
+        delta_min = vecs[:, 1:] @ delta_min @ vecs[:, 1:].T
+        return delta_max + delta_min
+
+
+class VariationalBroydenFamily(HessianApproximation):
+    @abstractmethod
+    def theta_squared(self, dx, dg):
+        """Should be implemented by subclasses"""
+
+    def deltaH(self, dx, dg):
+        theta2 = self.theta_squared(dx, dg)
+        s = dg - np.dot(self, dx)
+        dxs = np.dot(dx, s)
+        v = np.dot(dx, self).dot(dx) * dg - np.dot(dg, dx) * np.dot(self, dx)
+        return np.outer(s, s) / dxs - theta2 * np.outer(v, v) / dxs
+
+
+class BroydenTSBFGSHessian(VariationalBroydenFamily):
+    def theta_squared(self, dx, dg):
+        d = dx @ dg
+        b = dx @ self @ dx
+        h = dg @ np.linalg.inv(self) @ dg
+
+        target = d / b
+        # theta_sq = np.log1p(np.exp(-1 / abs(d * b))) + np.maximum(1 / (d * b), 0)
+        # if theta_sq < 0.0:
+        # theta_sq = (target * (d - b) + d - h) / (d * (d**2 - h * b))
+        # theta_sq = max(0.0, theta_sq)
+        if np.linalg.det(self) < 0:
+            if d * b > 0:
+                logger.debug("BFGS")
+                theta_sq = 1 / (d * b)
+            else:
+                logger.debug("Fixed-target")
+                target = 1.1
+                theta_sq = (target * (d - b) + d - h) / (d * (d**2 - h * b))
+        else:
+            logger.debug("Fixed-target")
+            target = -0.9
+            theta_sq = (target * (d - b) + d - h) / (d * (d**2 - h * b))
+
+        f = (h - d + theta_sq * d * (d**2 - h * b)) / (d - b)
+        logger.debug(
+            f"Broyden: theta^2 = {theta_sq:.2E}, BFGS theta^2 = {1 / (d * b):.2E} "
+            f"f = {f:.2E}, target = {target:.2E}, d = {d:.2E}, b = {b:.2E}, h = {h:.2E}"
+        )
+        return theta_sq
 
 
 class RelativeErrorHessian(HessianApproximation):
@@ -151,7 +239,10 @@ class BofillHessian(HessianApproximation):
 
     def deltaH(self, dx, dg):
         phi = self.phi(dx, dg)
-        logger.debug(f"BofillHessian: phi = {phi:.2E}")
+        logger.debug(
+            f"BofillHessian: phi = {phi:.2E}, d = {dx @ dg:.2E}, "
+            f"b = {dx @ self @ dx:.2E}, det(B) = {np.linalg.det(self):.2E}"
+        )
         if phi < 1.0:  # Check to avoid division by zero
             return (1 - phi) * MurtaghSargentHessian.deltaH(
                 self, dx, dg
@@ -166,7 +257,7 @@ class ModifiedBofillHessian(BofillHessian):
     consistent with the names used throughout this module."""
 
     def phi(self, dx, dg):
-        # TODO: The class to det and inv are highly wasteful!
+        # TODO: The calls to det and inv are highly wasteful!
         detH = np.linalg.det(self)
         Hinv = np.linalg.inv(self)
         s = dg - np.dot(self, dx)

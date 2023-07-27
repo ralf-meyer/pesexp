@@ -4,6 +4,7 @@ from pesexp.hessians.hessian_approximations import (
     BFGSHessian,
     DFPHessian,
     TSBFGSHessian,
+    VariationalBroydenFamily,
     RelativeErrorHessian,
     MurtaghSargentHessian,
     PowellHessian,
@@ -218,6 +219,29 @@ def test_perfect_update(hess):
 
     H.update(dx, dg)
     np.testing.assert_allclose(H, [[2.0, 0.0], [0.0, -2.0]])
+
+
+@pytest.mark.parametrize(
+    "h0",
+    [
+        [[2.0, -0.5, 0.2], [-0.5, 3.0, 0.8], [0.2, 0.8, 1.0]],
+        [[-2.0, -0.5, 0.2], [-0.5, 3.0, 0.8], [0.2, 0.8, 1.0]],
+    ],
+)
+def test_variational_broyden_family(h0):
+    dx = np.array([0.8, 1.3, -0.7])
+    dg = np.array([0.9, -1.1, 0.8])
+
+    H_ref = BFGSHessian(h0)
+    H_ref.update(dx, dg)
+
+    class TestHessian(VariationalBroydenFamily):
+        def theta_squared(self, dx, dg):
+            return 1 / (np.dot(dx, self).dot(dx) * np.dot(dx, dg))
+
+    H = TestHessian(h0)
+    H.update(dx, dg)
+    np.testing.assert_allclose(H, H_ref)
 
 
 def test_Bofill_Hessian():
