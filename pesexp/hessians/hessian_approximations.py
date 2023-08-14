@@ -1,6 +1,7 @@
 import logging
 from abc import abstractmethod
 import numpy as np
+from pesexp.linalg import dscaleh
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,25 @@ def rescale_hessian_eigs(hessian_approximation, weighting=(1.0, 10.0)):
             self += B.T @ deltaH @ B
 
     return RescaledHessianApproximation
+
+
+def dscale_hessian(hessian_approximation):
+    class DscaledHessianApproximation(hessian_approximation):
+        def update(self, dx, dg):
+            # transform
+            H_trans, d = dscaleh(self)
+            Binv = np.diag(d)
+            B = np.diag(1 / d)
+            dx_trans = B @ dx
+            dg_trans = Binv @ dg
+
+            # calculate update in transformed space
+            deltaH = hessian_approximation.deltaH(H_trans, dx_trans, dg_trans)
+
+            # backtransform
+            self += B.T @ deltaH @ B
+
+    return DscaledHessianApproximation
 
 
 class HessianApproximation(np.ndarray):
