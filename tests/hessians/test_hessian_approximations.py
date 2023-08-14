@@ -13,6 +13,7 @@ from pesexp.hessians.hessian_approximations import (
     FarkasSchlegelHessian,
     rescale_hessian_eigs,
     rescale_hessian_step,
+    dscale_hessian,
 )
 
 
@@ -28,6 +29,7 @@ from pesexp.hessians.hessian_approximations import (
         BofillHessian,
         ModifiedBofillHessian,
         FarkasSchlegelHessian,
+        dscale_hessian(BofillHessian),
     ],
 )
 @pytest.mark.parametrize(
@@ -76,6 +78,8 @@ def test_scaling_invariance(hess, h0):
         rescale_hessian_step(RelativeErrorHessian),
         rescale_hessian_step(PowellHessian),
         rescale_hessian_step(BofillHessian),
+        dscale_hessian(PowellHessian),
+        dscale_hessian(BofillHessian),
     ],
 )
 @pytest.mark.parametrize(
