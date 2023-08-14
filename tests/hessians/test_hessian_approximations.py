@@ -80,6 +80,7 @@ def test_scaling_invariance(hess, h0):
         rescale_hessian_step(BofillHessian),
         dscale_hessian(PowellHessian),
         dscale_hessian(BofillHessian),
+        dscale_hessian(TSBFGSHessian),
     ],
 )
 @pytest.mark.parametrize(
